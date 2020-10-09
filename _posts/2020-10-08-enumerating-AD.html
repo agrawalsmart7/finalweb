@@ -18,7 +18,7 @@ BloodHound is a great tool for mapping out the objects in Active Directory, it u
 
 <p>I have used the PowerView tool, another GREAT tool for enumerating objects in AD.</p>
 
-<img src="../../../Screenshot 2020-10-08 at 1.02.28 AM.png" width="300" height="300">
+<img src="../../../media/Screenshot 2020-10-08 at 1.02.28 AM.png" width="300" height="300">
 
 <p>So before we proceed further, we need to understand the users that we have created for the demonstration.</p>
 
@@ -34,11 +34,11 @@ BloodHound is a great tool for mapping out the objects in Active Directory, it u
 
 <p>After running SharpHound, and import every JSON file returned by SharpHound in to BloodHound. These are the objects of the ‘adlab.local’ domain graph made by BloodHound, on which we need to focus on.</p>
 
-<img src="../../../Screenshot 2020-10-06 at 11.48.07 PM.png" width="600" height="500">
+<img src="../../../media/Screenshot 2020-10-06 at 11.48.07 PM.png" width="600" height="500">
 
 <p>The most interested groups are Domain Admins, Administrators, <br>We will see what users are inside of Domain Admins</p>
 <!-- <blockquote class="blockquote">The dreams of yesterday are the hopes of today and the reality of tomorrow. Science has not yet mastered prophecy. We predict too much for the next year and yet far too little for the next ten.</blockquote> -->
-<img src="../../../Screenshot 2020-10-08 at 1.36.15 AM.png" width="600" height="500">
+<img src="../../../media/Screenshot 2020-10-08 at 1.36.15 AM.png" width="600" height="500">
 
 <p>As you can see ‘suser’ is in the Group, so this will be our interested target, we will make a note of it. </p>
 
@@ -46,7 +46,7 @@ BloodHound is a great tool for mapping out the objects in Active Directory, it u
 
 <p>We will give the start node as VICTIM@ADLAB.LOCAL and destination node as SUSER@ADLAB.LOCAL, and check the results.</p>
 
-<img src="../../../Screenshot 2020-10-08 at 1.43.11 AM.png" width="600" height="500">
+<img src="../../../media/Screenshot 2020-10-08 at 1.43.11 AM.png" width="600" height="500">
 
 <p>And yes, we have one, as you can see, the starting node is victim@adlab.local, and the ending node is suser@adlab.local(The one that is not displaying).
 </p>
@@ -64,7 +64,7 @@ BloodHound is a great tool for mapping out the objects in Active Directory, it u
 <p>Right now we are a victim user, which is in the domain users group (Less privileged user).
 </p>
 
-<img src="../../../Screenshot 2020-10-08 at 1.51.12 AM.png" width="400" height="100">
+<img src="../../../media/Screenshot 2020-10-08 at 1.51.12 AM.png" width="400" height="100">
 
 <p>As we know we can change the victim2 password because of GenericAll permission, so let’s change the password.</p>
 
@@ -72,7 +72,7 @@ BloodHound is a great tool for mapping out the objects in Active Directory, it u
 
 <b>Result:</b>
 
-<img src="../../../Screenshot 2020-10-08 at 1.51.12 AM.png" width="400" height="100">
+<img src="../../../media/Screenshot 2020-10-08 at 1.51.12 AM.png" width="400" height="100">
 
 <p>Here we have changed the password but now the challenging part comes here,<br>
 How can we impersonate to victim2 User? In other words, How can we use those credentials to become victim2?
@@ -95,14 +95,14 @@ How can we impersonate to victim2 User? In other words, How can we use those cre
 
 <p>Here you can not provide the password along with username, it will ask separately like this</p>
 
-<img src="../../../Screenshot 2020-10-08 at 2.04.00 AM.png" width="400" height="100">
+<img src="../../../media/Screenshot 2020-10-08 at 2.04.00 AM.png" width="400" height="100">
 
 <p>But I wasn’t able to submit the password, it just takes me out to the directory without letting me type the password. I don’t know the problem? <br><br>
 	So after searching here and there, I come to know that in Metasploit there is a post exploit module for runas command, so I quickly used it, and,, <br><br>
 
 	<blockquote>CMD: run post/windows/manage/run_as_psh user=victim2 pass=hacked123!@# domain=adlab.local</blockquote>
 	<b>Result</b><br>
-	<img src="../../../Screenshot 2020-10-08 at 2.06.15 AM.png" width="700" height="100"><br>
+	<img src="../../../media/Screenshot 2020-10-08 at 2.06.15 AM.png" width="700" height="100"><br>
 	It worked perfectly, now I am a victim2 user. Remember victim2 user was in the Vulnerablegroup, and that group was having GenericAll permissions on SUSER@ADLAB.LOCAL.
 
 </p>
@@ -111,11 +111,11 @@ How can we impersonate to victim2 User? In other words, How can we use those cre
 
 <blockquote>CMD: net user suser hacked123!@# /domain</blockquote><br>
 <b>Result</b><br>
-<img src="../../../Screenshot 2020-10-08 at 2.10.27 AM.png" width="700" height="100">
+<img src="../../../media/Screenshot 2020-10-08 at 2.10.27 AM.png" width="700" height="100">
 </p>
 
 <p>Now impersonating to suser in the same way, <br>
-	<img src="../../../Screenshot 2020-10-08 at 2.11.26 AM.png" width="700" height="100">
+	<img src="../../../media/Screenshot 2020-10-08 at 2.11.26 AM.png" width="700" height="100">
 
 </p>
 
@@ -123,7 +123,7 @@ How can we impersonate to victim2 User? In other words, How can we use those cre
 
 <blockquote>CMD: net group "Domain Admins" victim /ADD /DOMAIN</blockquote>
 <b>Results</b><br>
-<img src="../../../Screenshot 2020-10-08 at 1.29.29 AM.png" width="600" height="500"><br>
+<img src="../../../media/Screenshot 2020-10-08 at 1.29.29 AM.png" width="600" height="500"><br>
 
 And there we go, we are the administrator of the domain ‘adlab.local’. 
 
@@ -144,6 +144,6 @@ Till then, stay safe stay healty
 
 
 
-<img class="img-fluid" src="https://source.unsplash.com/Mn9Fa_wQH-M/800x450" alt="Demo Image">
-<span class="caption text-muted">To go places and do things that have never been done before – that’s what living is all about.</span>
+<img class="img-fluid" src="../../../media/covid_protection.jpeg" alt="Demo Image">
+<span class="caption text-muted">Remember to Protect Others.</span>
 
