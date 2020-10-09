@@ -6,11 +6,9 @@ baseurl:            /
 url:                https://smart7.in
 
 # Social Profiles
-twitter_username:   SBootstrap
-github_username:    StartBootstrap
-facebook_username:  StartBootstrap
-instagram_username:  
-linkedin_username:
+twitter_username:   agrawalsmart7
+github_username:    agrawalsmart7
+linkedin_username:  agrawalsmart7
 
 # Add your google-analytics ID here to activate google analytics
 google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
