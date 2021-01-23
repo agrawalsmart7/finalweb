@@ -33,7 +33,7 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>In a service, there will be a number of APIs which are playing different kinds of role, so it becomes very difficult to implement authentication on each and every API. For ex: I was working on a popular website, where I was able to get the route paths, which contains a huge number of API endpoints so I cheked some of the APIs and those were secured, they asked for token, but as there are lot of APIs so I quickly wrote a script to find out which API is vulnerable for lack of authentication, and I found an API which leaks everything of their customer like, Customer name, PAN card, Mobile Number, Room Number, Cash receipts, Transaction ID, Photo, Adhar Number, etc And that was leaking for huge number of customers.</p>
 
 <p>So this might give you an idea, what exactly I am talking about. Below is the code, you can see, we were able to secure the GET method, but not delete. And the consequences are, we can successfully delete the user.</p>
-<img src="../../../media/APP3_code.png" width="600" height="200">
+<img src="../../../media/APP3_code.png" width="600" height="500">
 <p>Let me just explain a bit about this code, we first create a `require_auth` function in which we are wrapping  (@wrap) the function 'f' or whaterver function we provide. Here, we are wrapping `get()` by using `requires_auth` decorator inside the class. So in short what exactly happens is, when we call `GET` request on this API `/api/v1/users/[id]`, it first calls checker function , then `checker` function check if header `Authorization` is not present return 401, and if it is present then it checks the token with the actual token in the backend. If token matches, checker returns `f` function basically, `get` function and then `get` functions get executed.</p>
 
 <p>So we check if this code works exactly that we think it should.</p>
@@ -66,7 +66,7 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>Ex:1- Look at the below example</p>
 <p>
 URL: http://127.0.0.1:5000/api/v1/users/7604</p>
-<img src="../../../media/get_user_with_id.png" width="600" height="500">
+<img src="../../../media/get_user_with_id.png" width="600" height="200">
 <p>This API retrieves the users information by looking at the id after the users path. i.e. 7604. Now this id you can see is guessable, what if I try change it to 7603, if the server is vulnerable to IDOR, it will change the reference to retrieve other user information.</p>
 
 <p>Similarly we can emuerate all the users, so this is just a simple IDOR vulnerable environment </p>
