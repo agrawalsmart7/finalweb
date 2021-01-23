@@ -66,7 +66,7 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>Ex:1- Look at the below example</p>
 <p>
 URL: http://127.0.0.1:5000/api/v1/users/7604</p>
-<img src="../../../media/get_user_with_id.png" width="600" height="200">
+<img src="../../../media/get_user_with_id.png" width="600" height="500">
 <p>This API retrieves the users information by looking at the id after the users path. i.e. 7604. Now this id you can see is guessable, what if I try change it to 7603, if the server is vulnerable to IDOR, it will change the reference to retrieve other user information.</p>
 
 <p>Similarly we can emuerate all the users, so this is just a simple IDOR vulnerable environment </p>
@@ -79,14 +79,14 @@ URL: http://127.0.0.1:5000/api/v1/users/7604</p>
 <img src="../../../media/post_request.png" width="600" height="200">
 <p>Then what should we do? </p>
 <p>If we can make user id impossible to guess it? Would it solve our problem? Let's find out. </p>
-<img src="../../../media/puttinghashid_incode.png" width="600" height="200">
+<img src="../../../media/puttinghashid_incode.png" width="700" height="400">
 
 <p>Now you can see, in the first time we create the user we encrypt the userid, because user id was the primary key through which the user can retrieve his/her data. Now what he will his user id is:- <b>57c2ebe70049f224e5756afbb3d8526d3205a27999be7062d6680d020d7f1bc3</b></p>
 
 <p>URL:- http://127.0.0.1:5000/api/v1/users/57c2ebe70049f224e5756afbb3d8526d3205a27999be7062d6680d020d7f1bc3</p>
 <p>This URL gives us this:-</p>
 
-<img src="../../../media/getuser_withhashid.png" width="600" height="200">
+<img src="../../../media/getuser_withhashid.png" width="800" height="200">
 <p>Now how will you guess other Users ID? Would it be possible? I don't think so. So we concluded that, if your rest API opens publically, the user can not enumerate other users data? Would it be possible?.</p>
 
 <p>
