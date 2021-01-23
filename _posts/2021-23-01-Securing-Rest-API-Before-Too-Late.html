@@ -33,19 +33,19 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>In a service, there will be a number of APIs which are playing different kinds of role, so it becomes very difficult to implement authentication on each and every API. For ex: I was working on a popular website, where I was able to get the route paths, which contains a huge number of API endpoints so I cheked some of the APIs and those were secured, they asked for token, but as there are lot of APIs so I quickly wrote a script to find out which API is vulnerable for lack of authentication, and I found an API which leaks everything of their customer like, Customer name, PAN card, Mobile Number, Room Number, Cash receipts, Transaction ID, Photo, Adhar Number, etc And that was leaking for huge number of customers.</p>
 
 <p>So this might give you an idea, what exactly I am talking about. Below is the code, you can see, we were able to secure the GET method, but not delete. And the consequences are, we can successfully delete the user.</p>
-<img src="../../../media/APP3_code.png" width="300" height="300">
+<img src="../../../media/APP3_code.png" width="600" height="200">
 <p>Let me just explain a bit about this code, we first create a `require_auth` function in which we are wrapping  (@wrap) the function 'f' or whaterver function we provide. Here, we are wrapping `get()` by using `requires_auth` decorator inside the class. So in short what exactly happens is, when we call `GET` request on this API `/api/v1/users/[id]`, it first calls checker function , then `checker` function check if header `Authorization` is not present return 401, and if it is present then it checks the token with the actual token in the backend. If token matches, checker returns `f` function basically, `get` function and then `get` functions get executed.</p>
 
 <p>So we check if this code works exactly that we think it should.</p>
 
 <p>When we provide invalid access token</p>
 
-<img src="../../../media/invalid_access_token.png" width="300" height="300">
+<img src="../../../media/invalid_access_token.png" width="600" height="200">
 <p>When we provide valid token</p>
 
-<img src="../../../media/valid_access_token" width="300" height="300">
+<img src="../../../media/valid_access_token" width="600" height="200">
 <p>As you can see, we didn't wrap `delete` function, so that means we can use DELETE method to delete the user.</p>
-<img src="../../../media/DeleteUserWithoutToken.png" width="300" height="300">
+<img src="../../../media/DeleteUserWithoutToken.png" width="600" height="200">
 <p>So this it is very important to check each function is secure or not, in this case, what we need is, we need @require_auth decorator on the function which we wanted to secure, just a single line and you can save your function from web attack. So adding require_auth decorator on each function, then we are free even if this API have public accessed intentionally or unintentionally.</p>
 
 <p>Okay, let's suppose, we are not securing any function here, what the attacker can do here, neither on GET nor in DELETE?</p>
@@ -66,7 +66,7 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>Ex:1- Look at the below example</p>
 <p>
 URL: http://127.0.0.1:5000/api/v1/users/7604</p>
-<img src="../../../media/get_user_with_id.png" width="300" height="300">
+<img src="../../../media/get_user_with_id.png" width="600" height="200">
 <p>This API retrieves the users information by looking at the id after the users path. i.e. 7604. Now this id you can see is guessable, what if I try change it to 7603, if the server is vulnerable to IDOR, it will change the reference to retrieve other user information.</p>
 
 <p>Similarly we can emuerate all the users, so this is just a simple IDOR vulnerable environment </p>
@@ -76,17 +76,17 @@ URL: http://127.0.0.1:5000/api/v1/users/7604</p>
 <p>You can also check the source code, you will find that first time we create the user using POST request, we create it as it is without hashing anything. 
 </p>
 
-<img src="../../../media/post_request.png" width="300" height="300">
+<img src="../../../media/post_request.png" width="600" height="200">
 <p>Then what should we do? </p>
 <p>If we can make user id impossible to guess it? Would it solve our problem? Let's find out. </p>
-<img src="../../../media/puttinghashid_incode.png" width="300" height="300">
+<img src="../../../media/puttinghashid_incode.png" width="600" height="200">
 
 <p>Now you can see, in the first time we create the user we encrypt the userid, because user id was the primary key through which the user can retrieve his/her data. Now what he will his user id is:- <b>57c2ebe70049f224e5756afbb3d8526d3205a27999be7062d6680d020d7f1bc3</b></p>
 
 <p>URL:- http://127.0.0.1:5000/api/v1/users/57c2ebe70049f224e5756afbb3d8526d3205a27999be7062d6680d020d7f1bc3</p>
 <p>This URL gives us this:-</p>
 
-<img src="../../../media/getuser_withhashid.png" width="300" height="300">
+<img src="../../../media/getuser_withhashid.png" width="600" height="200">
 <p>Now how will you guess other Users ID? Would it be possible? I don't think so. So we concluded that, if your rest API opens publically, the user can not enumerate other users data? Would it be possible?.</p>
 
 <p>
@@ -113,7 +113,7 @@ Yes, if the users is using UID in URL, the uid can get leaked in third party web
 <p>
 Another example can be a SQL Injection. So the implementation should be like, you first receives the request, then get the parameter name and values and then you send those parameters to your validation method which will validate each parameters. Something like this:-</p>
 
-<img src="../../../media/validation_userinput.png " width="300" height="300">
+<img src="../../../media/validation_userinput.png " width="600" height="200">
 
 <p>check_validation method will validate according to the parameter context, if it is int, validate it in INT context, if it is email, validate it in EMAIL context, so on..
 </p>
