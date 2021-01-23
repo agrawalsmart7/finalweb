@@ -43,7 +43,7 @@ We will see how we can over come from all these one by one with practicle exampl
 <img src="../../../media/invalid_access_token.png" width="600" height="200">
 <p>When we provide valid token</p>
 
-<img src="../../../media/valid_access_token" width="600" height="200">
+<img src="../../../media/valid_access_token.png" width="600" height="200">
 <p>As you can see, we didn't wrap `delete` function, so that means we can use DELETE method to delete the user.</p>
 <img src="../../../media/DeleteUserWithoutToken.png" width="600" height="200">
 <p>So this it is very important to check each function is secure or not, in this case, what we need is, we need @require_auth decorator on the function which we wanted to secure, just a single line and you can save your function from web attack. So adding require_auth decorator on each function, then we are free even if this API have public accessed intentionally or unintentionally.</p>
