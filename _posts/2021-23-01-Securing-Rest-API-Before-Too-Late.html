@@ -63,14 +63,14 @@ We will see how we can over come from all these one by one with practicle exampl
 
 <h2>IDOR - Insecure Direct Object Reference</h2>
 
-<p>IDOR is a kind of vulnerability through which attacker can change its (object) reference to retrieve information of others. </p>
+<p>IDOR is a kind of vulnerability through which attacker can change its (object) reference to retrieve information of others. Context of this attackers differ on the basis of the functionality in the website, here, we are retreiving information by ID. </p>
 <p>Ex:1- Look at the below example</p>
 <p>
 <code>URL: http://91ccdb970ff6.ngrok.io/api/v1/users/110</code></p>
 <img src="../../../media/get_user_with_id.png" width="600" height="200">
-<p>This API retrieves the users information by looking at the id after the users path. i.e. 110. Now this id you can see is guessable, what if I try change it to 109, if the server is vulnerable to IDOR, it will change the reference to retrieve other user information or do malicious task.</p>
+<p>This API retrieves the users information by looking at the id after the users path. i.e. 110. Now this id you can see is guessable, what if I try change it to 109, if the server is vulnerable to IDOR, it will change the reference to retrieve other users information.</p>
 
-<img src=""> "EDIT_HERE" <!-- WE SHOULD ADD SCREENSHOT OF USER 109-->
+<img src="../../../media/109_user_data.png" width="300" height="300"> 
  
 <p>Similarly we can emuerate all the users, so this is just a simple IDOR vulnerable environment </p>
 
@@ -95,7 +95,7 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>
 Yes, if the Websites are using UID in URL, the uid can get leaked in third party websites, but for that, the attacker now needs other vulnerabilities help. Vulnerabilities like XSS. But you have made this attack very complex, with less severity by just Hashing the UID.</p>
 
-<h2>Allowing Dangerous Methods is not a good IDEA</h2> <!-- Need_Edit need to think for PUT method -->
+<h2>Allowing Dangerous Methods is not a good IDEA</h2> 
 
 <p>Methods are GET, POST, PUT, DELETE, OPTIONS but we are talking about the dangerous method DELETE. What if we allowed DELETE method?, We serously can delete anyone user from the SYSTEM</p>
 
@@ -111,14 +111,14 @@ Yes, if the Websites are using UID in URL, the uid can get leaked in third party
 
 <h2>Validating User Input</h2>
 
-<p>Validating user input is another important task in securing API, suppose, if you are accepting user email without validating it, and then you use that variable to run System command, something like this, another example can be a SQL Injection</p>
+<p>Validating user input is another important task in securing API, suppose, if you are accepting user email without validating, another example can be a SQL Injection</p>
 
 <p>
 So the implementation should be like, you first receives the request, then you retrieves all the parameter name and values and then you send those parameters to your validation method which will validate each parameters:-</p>
 
 <img src="../../../media/validation_userinput.png " width="600" height="200">
 
-<p>Ignore 'return Success', check_validation method will validate according to the parameter context, if it is int, validate it in INT context, if it is email, validate it in EMAIL context, so on..
+<p><code>Please ignore bad code here,</code>, check_validation method will validate according to the parameter context, if it is int, validate it in INT context, if it is email, validate it in EMAIL context, so on..
 </p>
 
 <p>That's all</p>
