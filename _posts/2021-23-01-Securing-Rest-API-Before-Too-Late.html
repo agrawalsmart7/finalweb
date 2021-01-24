@@ -25,7 +25,7 @@ Most common attacks that happens in APIs, (REST)<br><br>
 We will see how we can over come from all these one by one with practicle example. One note point is, we all do this in **Python3** using Flask. 
 
 </p>
-<p><b>Note:1</b>: Also this post assumes that How should you create your API so that if left unintentionally, it doesn't affect to the security.</p>
+<p><b>Note:1</b>: The context of this blog post is, 'How you should create your API so that if left unintentionally open publicaly, it doesn't affect to the security'.</p>
 <p><b>Note:2</b>: You can find all the code used on this vulnerable Flask app <a href="https://github.com/agrawalsmart7/Rest_API_vulnerable_apps">here</a>.</p>
 
 
@@ -35,11 +35,11 @@ We will see how we can over come from all these one by one with practicle exampl
 
 <p>So this might give you an idea, what exactly I am talking about. Below is the code, you can see, we were able to secure the GET method, but not delete. And the consequences are, we can successfully delete the user.</p>
 <img src="../../../media/APP3_code.png" width="600" height="500">
-<p>Let me just explain a bit about this code, we first create a `require_auth` function in which we are wrapping  (@wrap) the function 'f' or whaterver function we provide. Here, we are wrapping `get()` by using `requires_auth` decorator inside the class. So in short what exactly happens is, when we call `GET` request on this API `/api/v1/users/[id]`, it first calls checker function , then `checker` function check if header `Authorization` is not present return 401, and if it is present then it checks the token with the actual token in the backend. If token matches, checker returns `f` function basically, `get` function and then `get` functions get executed.</p>
+<p>Let me just explain a bit about this code, we first create a `require_auth` function in which we are wrapping  (@wrap) the function 'f' or whaterver function we provide. Here, we are wrapping `get()` by using `requires_auth` decorator inside the class. So in short what exactly happens is, when we call `GET` request on this API `/api/v1/users/[id]`, it first calls checker function , then `checker` function check if header `Authorization` is not present return 401, and if it is present then it checks the token with the actual token in the backend. If token matches, checker returns <code>f</code> function basically, <code>get</code> function and then <code>get</code> functions gets executed.</p>
 
 <p>So we check if this code works exactly that we think it should.</p>
 
-<p>When we provide invalid access token, please check the Authorization header.</p>
+<p>When we provide invalid access token(Check the Authorization header), we were able to get the 401 error.</p>
 
 <img src="../../../media/invalid_access_token.png" width="700" height="200">
 <p>When we provide valid token</p>
@@ -49,27 +49,29 @@ We will see how we can over come from all these one by one with practicle exampl
 <img src="../../../media/DeleteUserWithoutToken.png" width="600" height="200">
 <p>So this it is very important to check each function is secure or not, in this case, what we need is, we need @require_auth decorator on the function which we wanted to secure, just a single line and you can save your function from web attack. So adding require_auth decorator on each function, then we are free even if this API have public accessed intentionally or unintentionally.</p>
 
-<p>Okay, let's suppose, we are not securing any function here, what the attacker can do here, neither on GET nor on DELETE?</p>
+<p>Okay, let's suppose, we are not securing any function here neither GET nor DELETE (Meaning we are not wrapping any function)?, what the attacker can do here?</p>
 
 <h2>Sensitive API endpoints</h2>
-<p>I have seen many times that, by access the path, we got lot of sensitive data, by the browsing the API. Some of the examples are:-</p>
+<p>I have seen many times that, by access the path, we got lot of sensitive data, by just browsing the API. Some of the examples are:-</p>
 
 ~ /status<br>
 ~ /users<br>
 ~ /metadata<br>
 ~ /details<br>
 
-<p>So this weakness also a part of Lack of Authentication, the only best way I can imaging is, enforing the authentication as decribed above.</p>
+<p>There are tons of Path. So this weakness also a part of Lack of Authentication, the only best way I can imaging is, enforing the authentication as decribed above.</p>
 
 <h2>IDOR - Insecure Direct Object Reference</h2>
 
 <p>IDOR is a kind of vulnerability through which attacker can change its (object) reference to retrieve information of others. </p>
 <p>Ex:1- Look at the below example</p>
 <p>
-<code>URL: http://127.0.0.1:5000/api/v1/users/110</code></p>
+<code>URL: http://91ccdb970ff6.ngrok.io/api/v1/users/110</code></p>
 <img src="../../../media/get_user_with_id.png" width="600" height="200">
-<p>This API retrieves the users information by looking at the id after the users path. i.e. 110. Now this id you can see is guessable, what if I try change it to 109, if the server is vulnerable to IDOR, it will change the reference to retrieve other user information.</p>
+<p>This API retrieves the users information by looking at the id after the users path. i.e. 110. Now this id you can see is guessable, what if I try change it to 109, if the server is vulnerable to IDOR, it will change the reference to retrieve other user information or do malicious task.</p>
 
+<img src=""> "EDIT_HERE" <!-- WE SHOULD ADD SCREENSHOT OF USER 109-->
+ 
 <p>Similarly we can emuerate all the users, so this is just a simple IDOR vulnerable environment </p>
 
 <p>So did you get the root cause? I would say because of the ID was guessable, it was possible to get other users information. I am not saying that the website is not validating session with user id, that is the different case, here we are assuming that we left REST API open publiclly.</p>
@@ -91,9 +93,9 @@ We will see how we can over come from all these one by one with practicle exampl
 <p>Now how will you guess other Users ID? Would it be possible? I don't think so. So we concluded that, if your rest API opens publically, the user can not enumerate other users data if the primary key is unguessable? Would it be possible?.</p>
 
 <p>
-Yes, if the users is using UID in URL, the uid can get leaked in third party websites, but for that, the attacker now needs other vulnerabilities help. Vulnerabilities like XSS. But you have made this attack very complex, with less severity by just Hashing the UID.</p>
+Yes, if the Websites are using UID in URL, the uid can get leaked in third party websites, but for that, the attacker now needs other vulnerabilities help. Vulnerabilities like XSS. But you have made this attack very complex, with less severity by just Hashing the UID.</p>
 
-<h2>Allowing Dangerous Methods is not a good IDEA</h2>
+<h2>Allowing Dangerous Methods is not a good IDEA</h2> <!-- Need_Edit need to think for PUT method -->
 
 <p>Methods are GET, POST, PUT, DELETE, OPTIONS but we are talking about the dangerous method DELETE. What if we allowed DELETE method?, We serously can delete anyone user from the SYSTEM</p>
 
@@ -101,7 +103,7 @@ Yes, if the users is using UID in URL, the uid can get leaked in third party web
 
 <p><code>cmd: ` curl -XDELETE --no-ssl "https://4e686f4297a3.ngrok.io/api/v1/users/57c2ebe70049f224e5756afbb3d8526d3205a27999be7062d6680d020d7f1bc3"</code></p>
 
-<p>But if you hashed the primary key ( Through which the server delete the set from Database, in this case UID.) this problem is also solved. But because its DELETE, the severity is very high, because if the attcker can find out the UID some how by exploiting XSS, etc, he/she can delete him/her. But why do you need DELETE method? I would say, we should definetly not.</p>
+<p>But if you hashed the primary key ( Through which the server delete the set from Database, in this case UID.) this problem is also solved. But because its DELETE, the severity is high, because if the attcker can find out the UID some how by exploiting XSS, etc, he/she can delete him/her. But why do you need DELETE method? I would say, we should definetly not.</p>
 
 <h2>Enforce to use CSRF Token in EVERY API</h2>
 
