@@ -53,11 +53,11 @@ Lets just understand this as an practical example.
 <p>Now you have started the docker service with user namespace, we will execute the docker container. </p>
 <p>As you can see, when we tried to read the targeted file we are getting permission denied error, even though we are root inside the container but still can't read.</p>
 <img src="../../../media/container_can't_read_the_file.png" width="600" height="300" >
-<p>So this confirms that we successfully run the docker container as the permissions on utk2. Make sense? Because utk2 can not read the file, right, and we run the docker container as utk2, now this means the container is running as utk2 permission. </p>
+<p><b>Note:</b>	So this confirms that we successfully run the docker container as the permissions on utk2. Make sense? Because utk2 can not read the file, right, and we run the docker container as utk2, now this means the container is running as utk2 permission. </p>
 
-<p>Next, we will run the container with --privileged flag, and we will see if user namespace will work as what we think. </p>
+<p><b>Next, we will run the container with --privileged flag, and we will see if user namespace will work as what we think.</b></p>
 
-<p>But Docker said: If we wanted to use docker user namespaces, all containers started with default user namespaces by default, if you wanted to run a container as --privileged, you will need to disable user namespaces by giving <code>--userns=host</code> flag to <code>docker container create</code>, <code>docker container run</code>, or <code>docker container exec</code></p>
+<p><b>But Docker said</b>: If we wanted to use docker user namespaces, all containers started with default user namespaces by default, if you wanted to run a container as --privileged, you will need to disable user namespaces by giving <code>--userns=host</code> flag to <code>docker container create</code>, <code>docker container run</code>, or <code>docker container exec</code></p>
 
 <p>So --privilged flag will not work here. That means, you should never run docker with --privilged flag, while you can, but the security must be tight. </p>
 
