@@ -44,15 +44,15 @@ Lets just understand this as an practical example.
 <p>To create a username space follow this command:-</p>
 <code>dockerd --userns-remap="youruser:youruser"</code>
 <p>To use this command, first the docker service must be stopped, to do that, you can use <code>service docker stop</code></p>
-<img src="../../../media/running_dockerd_as_utk2.png"  width="600" height="400">
+<img src="../../../media/running_dockerd_as_utk2.png"  width="700" height="200">
 <p>youruser is the restricted user in this case <code>utk2:utk2</code>, the user must be reside inside these two files. <code>/etc/subuid & /etc/subgid</code>
 </p>
 <p>Something like this:-
 </p>
-<img src="../../../media/restricted_user_inside_uid_gid.png"  width="600" height="400">
+<img src="../../../media/restricted_user_inside_uid_gid.png"  width="400" height="300">
 <p>Now you have started the docker service with user namespace, we will execute the docker container. </p>
 <p>As you can see, when we tried to read the targeted file we are getting permission denied error, even though we are root inside the container but still can't read.</p>
-<img src="../../../media/container_can't_read_the_file.png" width="600" height="400" >
+<img src="../../../media/container_can't_read_the_file.png" width="600" height="300" >
 <p>Next, we will run the container with --privileged flag, and we will see if user namespace will work as what we think. </p>
 
 <p>But Docker said: If we wanted to use docker user namespaces, all containers started with default user namespaces by default, if you wanted to run a container as --privileged, you will need to disable user namespaces by giving <code>--userns=host</code> flag to <code>docker container create</code>, <code>docker container run</code>, or <code>docker container exec</code></p>
