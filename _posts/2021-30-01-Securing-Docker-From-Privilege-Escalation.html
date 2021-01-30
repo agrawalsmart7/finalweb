@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Preventing docker privilege escalation by using User NameSpaces</title>
+</head>
+<body>
+
+<p>Hello all</p>
+
+<p>Welcome to the new post, in this post we will see how we can secure docker from Privilege Escalation attacks.</p>
+
+<p>For this I have created a scenerio where I have two user: utk & utk2. utk is a privileged user, and utk2 is a non privileged user. </p>
+
+<p>Also, there is a file only some users can access it but not utk2, that also means utk can access the file, the filename is 'canyoureadme.txt'. 
+</p>
+<p>Below is the screenshot you can see.
+</p>
+<img src="utk_user_have_access" width="600" height="400">
+<p>But utk2 user can't read the file.
+</p>
+<img src="utk2_can't_read"  width="600" height="400">
+<p>So our target is, we must run the container as utk2 so that, so that if container gets comprmised, he can't read canyoureadme.txt file.</p>
+<p>We will run the docker container as normal first, and then we will start the container with user namespaces. By doing that, will make lot of confusions clear.
+</p>
+<p>So we run the container, with volume that contain our targeted file, mounted on the container, and we check if we can read the file. 
+</p>
+<img src="without_namespaces_can_read"  width="600" height="400">
+<p>And yes we can read without namespaces. </p>
+<p>Now we will run the containers with the user namespaces. But before going, we must understand what exactly is user namespaces.
+</p>
+<p>
+User Namespaces isolates containers according to the user's permissions. So if you have a restricted user, then you can run the containers as the restricted user. The note point is: The container will run as root, but on host it will run as the restricted user. So now if your container compromises, you don't need to worry about the privilege escalation attacks, even though the attacker successfully escapes from the compromised container, the attacker will have less privileges inside Host. 
+
+Lets just understand this as an practical example.
+</p>
+<p>To create a username space follow this command:-</p>
+<code>dockerd --userns-remap="youruser:youruser"</code>
+<p>To use this command, first the docker service must be stopped, to do that, you can use <code>service docker stop</code></p>
+<img src="running_dockerd_as_utk2"  width="600" height="400">
+<p>youruser is the restricted user in this case <code>utk2:utk2</code>, the user must be reside inside these two files. <code>/etc/subuid & /etc/subgid</code>
+</p>
+<p>Something like this:-
+</p>
+<img src="restricted_user_inside_uid_gid"  width="600" height="400">
+<p>Now you have started the docker service with user namespace, we will execute the docker container. </p>
+<p>As you can see, when we tried to read the targeted file we are getting permission denied error, even though we are root inside the container but still can't read.</p>
+<img src="container_can't_read_the_file" width="600" height="400" >
+<p>Next, we will run the container with --privileged flag, and we will see if user namespace will work as what we think. </p>
+
+<p>But Docker said: If we wanted to use docker user namespaces, all containers started with default user namespaces by default, if you wanted to run a container as --privileged, you will need to disable user namespaces by giving <code>--userns=host</code> flag to <code>docker container create</code>, <code>docker container run</code>, or <code>docker container exec</code></p>
+
+<p>So --privilged flag will not work here. That means, you should never run docker with --privilged flag, while you can, but the security must be tight. </p>
+
+
+<h2>Feedback</h2>
+Thanks for reading this,
+Feedbacks are always welcome.
+
+<h2>References</h2>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
