@@ -1,3 +1,11 @@
+---
+layout: post
+title: "Kubernetes Cluster: Attack and Defense Perspective Part - 1"
+subtitle: "Clusters: Attack and Defense Part - 1 "
+date: 2021-09-11 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+
 <p>Hi all<p>
 
 <p>I thought to dive into kubernetes and look into what security misconfigurations occur and when?</p>
@@ -16,7 +24,7 @@
 
 <p>Now what they can do is, they can get the service account token from this Path - /var/run/secrets/kubernetes.io/serviceaccount/token</p>
 
-<img src="../../media/retrieved_token.png" width="600" height="400">
+<img src="../../../media/retrieved_token.png" width="600" height="400">
 
 
 <p>And once they get the service account token they can access the APIs endpoint by using the token in the 'Authorization: Bearer <token>' header. Based on the permissions attached to the service account, the malicious actor can do the malicious things. We will see the demonstration later on this blog.</p>
@@ -33,14 +41,14 @@ This is where NetWork Policies helps us out. Let's talk about Network Policy fir
 Below image we can see that the static server have access to MySQL server, which might not needed but still static server pod can communicate to MySQL server Pod when No Network policies are in place:-
 </p>
 
-<img src="../../media/user_access_static_Aapp.png" width="600" height="400">
+<img src="../../../media/user_access_static_Aapp.png" width="600" height="400">
 
 <p>But when Network Policies are in Place then the attacker can not access the MySql server from ‘static server’.</p>
 
 <p>Below we defined that only a secured server can access the MySQL pod.</p>
 
 
-<img src="../../media/user_access_denied_static_app.png" width="600" height="400">
+<img src="../../../media/user_access_denied_static_app.png" width="600" height="400">
 
 <p>This was a very quick overview on network policies, we will learn more with practical examples in later posts.</p>
 
@@ -54,44 +62,44 @@ Below image we can see that the static server have access to MySQL server, which
     <p>Below is the actual permission defined and can be seen that we have defined resources and verbs as (*) which means everything.</p>
 
     
-    <img src="../../media/pod_reader.png" width="600" height="400">
+    <img src="../../../media/pod_reader.png" width="600" height="400">
     
 
 <p>This is the role binding with the service account ‘utk’. The above token we retrieved was belong to this user ‘utk’</p>
 
 
-<img src="../../media/rolebinding.png" width="600" height="400">
+<img src="../../../media/rolebinding.png" width="600" height="400">
 
  <p>as a result we got access to everything. For example, below we can list the pods:-</p>
 
-<img src="../../media/list_pods.png" width="600" height="400">
+<img src="../../../media/list_pods.png" width="600" height="400">
 
 <p>Now we will try to delete the pod “mysql” one, below is the request for deleting the same pod. But before that, let's check if the pod is even running or not (it must be).
 </p>
 
-<img src="../../media/CMD_LINE_running_pods.png" width="600" height="400">
+<img src="../../../media/CMD_LINE_running_pods.png" width="600" height="400">
 
 
 <p>Below is the actual Delete request for deleting the pod.</p>
 
-<img src="../../media/delete_pods_png.png" width="600" height="400">
+<img src="../../../media/delete_pods_png.png" width="600" height="400">
 
 
 <p>Now if we see again the list of pods running we can see the new pod just came up. That means we can delete the pod or even delete the whole deployment. </p>
 
-<img src="../../media/new_pod_running_cmd_png.png" width="600" height="400">
+<img src="../../../media/new_pod_running_cmd_png.png" width="600" height="400">
 
 
 <p>To mitigate this, we should only give the permission that is actually needed. If the pod needs to read the other pod and then give only read access to 'Only PODs'.</p>
 
 <p>For example, in this yaml file we create a rbac for list pods only.</p>
 
-<img src="../../media/podlist_only.png" width="600" height="400">
+<img src="../../../media/podlist_only.png" width="600" height="400">
 
 
 <p>So if we try to delete the mysql pod again, we will face 403 error.</p>
 
-<img src="../../media/403_ON_deleting.png" width="600" height="400">
+<img src="../../../media/403_ON_deleting.png" width="600" height="400">
 
 
 <h4>ServiceAccountToken:</h4>
@@ -104,7 +112,7 @@ Below image we can see that the static server have access to MySQL server, which
 
 <p>`Cmd - cat /var/run/secrets/kubernetes.io/serviceaccount/token`</p>
     
-    <img src="../../media/service account_token_false.png" width="600" height="400">
+    <img src="../../../media/service account_token_false.png" width="600" height="400">
 
 
    <p>But I think we should not use this instead we should always focus on providing restrictive RBAC to the specific service account.</p>
