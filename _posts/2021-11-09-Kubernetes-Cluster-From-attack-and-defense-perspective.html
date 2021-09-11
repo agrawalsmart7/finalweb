@@ -8,13 +8,13 @@ background: '/img/posts/01.jpg'
 
 <p>Hi all<p>
 
-<p>I thought to dive into kubernetes and look into what security misconfigurations occur and when?</p>
+<p>This is the first blog post on the series, we will look into what and when security misconfigurations occurs inside the clusters and how we can mitigate?</p>
 
-<p>I created a PHP application which hosts on kubernetes, and there is a service account attached to it.</p>
+<p>Quick intro, I have created a PHP application which hosts on kubernetes, and there is a service account attached to it.</p>
 
-<p>Note: I am using Minikube to demonstrate the environment.</p>
+<p><b>Note:</b> I am using Minikube to demonstrate the environment.</p>
 
-<p><h3>Security Misconfiguration:-</h3></p>
+<p><h3>Security Misconfigurations:-</h3></p>
 
 <h4>Secure Code -</h4>
 
@@ -45,12 +45,12 @@ Below image we can see that the static server have access to MySQL server, which
 
 <p>But when Network Policies are in Place then the attacker can not access the MySql server from ‘static server’.</p>
 
-<p>Below we defined that only a secured server can access the MySQL pod.</p>
+<p>Below we defined that ONLY a secured server can access the MySQL pod and no other pod can access the network policies.</p>
 
 
 <img src="../../../media/user_access_denied_static_app.png" width="600" height="300">
 
-<p>This was a very quick overview on network policies, we will learn more with practical examples in later posts.</p>
+<p>This was a very quick overview on network policies, we will learn more with practical examples in later upcoming posts.</p>
 
 
 <h4>Excessive Permissions (RBAC):</h4>
@@ -68,7 +68,7 @@ Below image we can see that the static server have access to MySQL server, which
 <p>This is the role binding with the service account ‘utk’. The above token we retrieved was belong to this user ‘utk’</p>
 
 
-<img src="../../../media/rolebinding.png" width="500" height="200">
+<img src="../../../media/rolebinding.png" width="500" height="300">
 
  <p>as a result we got access to everything. For example, below we can list the pods:-</p>
 
@@ -102,11 +102,13 @@ Below image we can see that the static server have access to MySQL server, which
 <img src="../../../media/403_ON_deleting.png" width="600" height="200">
 
 
+<br>
+
 <h4>ServiceAccountToken:</h4>
 
     <p>Now all this starts from the service account token, which was found inside the POD, so why does the service account token need to be inside the POD? As PODs need to access the other API resources so it's important to include the service account token within POD. But what if we don't want to include the service account token inside the POD for example, a static container for static objects, there is no need to access other API resources.</p>
 
-    <p>Well we can do that by defining `automountServiceAccountToken: false`.</p>
+    <p>Well we can do that by defining <code>automountServiceAccountToken: false</code>.</p>
 
 <p>And as a result if we try to cat the token again, the directory /secrets went missing. - </p>
 
@@ -118,7 +120,7 @@ Below image we can see that the static server have access to MySQL server, which
    <p>But I think we should not use this instead we should always focus on providing restrictive RBAC to the specific service account.</p>
 
 
-<p>That's all people, I hope you find it useful, please let me know if anything you find it to be correct. Contact me on twitter. @agrawalsmart7</p>
+<p>That's all people, I hope you find it useful, please let me know if anything you find it to be correct. Contact me on twitter. @agrawalsmart7. Or you can click on below twitter icon. ;) </p>
 
 <p>Have a good day </p>
 
