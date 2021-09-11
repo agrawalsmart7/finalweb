@@ -1,0 +1,117 @@
+<p>Hi all<p>
+
+<p>I thought to dive into kubernetes and look into what security misconfigurations occur and when?</p>
+
+<p>I created a PHP application which hosts on kubernetes, and there is a service account attached to it.</p>
+
+<p>Note: I am using Minikube to demonstrate the environment.</p>
+
+<p><h3>Security Misconfiguration:-</h3></p>
+
+<h4>Secure Code -</h4>
+
+    <p>There are many times it happens that the developer may leave a critical vulnerable code which is vulnerable to RCE or SSRF. If this is found by an attacker, half of the damage is already done.</p>
+
+    <p>The above PHP application is vulnerable to Command injection so the very first step will be to know if we are inside kubernetes or not. We can check if the environment variable KUBERNETES_SERVICE_HOST is available or not or you can also check if the kubernetes.io folder is available or not.</p>
+
+<p>Now what they can do is, they can get the service account token from this Path - /var/run/secrets/kubernetes.io/serviceaccount/token</p>
+
+<img src="../../media/retrieved_token.png" width="600" height="400">
+
+
+<p>And once they get the service account token they can access the APIs endpoint by using the token in the 'Authorization: Bearer <token>' header. Based on the permissions attached to the service account, the malicious actor can do the malicious things. We will see the demonstration later on this blog.</p>
+
+<p>Not only this, malicious actors can potentially scan the subnet and identify if there is any sensitive POD available. For ex: MySQL, RabbitMQ, or any open accessed panel.</p>
+
+This is where NetWork Policies helps us out. Let's talk about Network Policy first.</p>
+
+<h4>Network Policies:</h4>
+
+<p>By default a pod can communicate to any pod and if there is not a proper security implemented then this might create a problem. 
+
+<p>Take an example from above, we found RCE, and now we can scan the network and if we found any sensitive pod exposed on the network which is accessible by our controlled POD where RCE found, then we can try to exploit it, and do lateral movement.
+Below image we can see that the static server have access to MySQL server, which might not needed but still static server pod can communicate to MySQL server Pod when No Network policies are in place:-
+</p>
+
+<img src="../../media/user_access_static_Aapp.png" width="600" height="400">
+
+<p>But when Network Policies are in Place then the attacker can not access the MySql server from ‘static server’.</p>
+
+<p>Below we defined that only a secured server can access the MySQL pod.</p>
+
+
+<img src="../../media/user_access_denied_static_app.png" width="600" height="400">
+
+<p>This was a very quick overview on network policies, we will learn more with practical examples in later posts.</p>
+
+
+<h4>Excessive Permissions (RBAC):</h4>
+
+    <p>It might be ok if they have got the token if you have restricted permission on that service account but as far as I think, a lot of times administrator/developer made a mistake to use a wide range of permissions either we can say they forget to remove the wide range of permissions at Prod or they might not know what issue can aries. </p>
+
+    <p>As in the below image, we  see we give wild cards to each and every component. Now what it gives the user account is the super user power, even if it is a service account but he/she can do anything. So what if the attacker compromised the service account token? They can read, DELETE, Create the secrets, Pods, Backdoors in the network.</p>
+
+    <p>Below is the actual permission defined and can be seen that we have defined resources and verbs as (*) which means everything.</p>
+
+    
+    <img src="../../media/pod_reader.png" width="600" height="400">
+    
+
+<p>This is the role binding with the service account ‘utk’. The above token we retrieved was belong to this user ‘utk’</p>
+
+
+<img src="../../media/rolebinding.png" width="600" height="400">
+
+ <p>as a result we got access to everything. For example, below we can list the pods:-</p>
+
+<img src="../../media/list_pods.png" width="600" height="400">
+
+<p>Now we will try to delete the pod “mysql” one, below is the request for deleting the same pod. But before that, let's check if the pod is even running or not (it must be).
+</p>
+
+<img src="../../media/CMD_LINE_running_pods.png" width="600" height="400">
+
+
+<p>Below is the actual Delete request for deleting the pod.</p>
+
+<img src="../../media/delete_pods_png.png" width="600" height="400">
+
+
+<p>Now if we see again the list of pods running we can see the new pod just came up. That means we can delete the pod or even delete the whole deployment. </p>
+
+<img src="../../media/new_pod_running_cmd_png.png" width="600" height="400">
+
+
+<p>To mitigate this, we should only give the permission that is actually needed. If the pod needs to read the other pod and then give only read access to 'Only PODs'.</p>
+
+<p>For example, in this yaml file we create a rbac for list pods only.</p>
+
+<img src="../../media/podlist_only.png" width="600" height="400">
+
+
+<p>So if we try to delete the mysql pod again, we will face 403 error.</p>
+
+<img src="../../media/403_ON_deleting.png" width="600" height="400">
+
+
+<h4>ServiceAccountToken:</h4>
+
+    <p>Now all this starts from the service account token, which was found inside the POD, so why does the service account token need to be inside the POD? As PODs need to access the other API resources so it's important to include the service account token within POD. But what if we don't want to include the service account token inside the POD for example, a static container for static objects, there is no need to access other API resources.</p>
+
+    <p>Well we can do that by defining `automountServiceAccountToken: false`.</p>
+
+<p>And as a result if we try to cat the token again, the directory /secrets went missing. - </p>
+
+<p>`Cmd - cat /var/run/secrets/kubernetes.io/serviceaccount/token`</p>
+    
+    <img src="../../media/service account_token_false.png" width="600" height="400">
+
+
+   <p>But I think we should not use this instead we should always focus on providing restrictive RBAC to the specific service account.</p>
+
+
+<p>That's all people, I hope you find it useful, please let me know if anything you find it to be correct. Contact me on twitter. @agrawalsmart7</p>
+
+<p>Have a good day </p>
+
+Thanks
