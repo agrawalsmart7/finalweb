@@ -20,7 +20,7 @@ background: '/img/posts/01.jpg'
 
 <p>Here you can check we have main deployment where the users can access the data and retrieve the data ( More shorten way - The Frontend Application). Now we also can see that there is another POD running in the same namespace `default` as running our frontend application. </p>
 
-<img src="../media/pods_without_NP.png" width="900px" height="100px">
+<img src="../../../media/pods_without_NP.png" width="900px" height="100px">
 
 <p>By the way, PODs are non-isolated even if they are in different namespace.</p>
 
@@ -33,11 +33,11 @@ background: '/img/posts/01.jpg'
 <p>So I scanned the network and I found mysql port running over one of the machine and some other ports as well. Here is the results.
 </p>
 
-<img src="../media/Network_Scan.png" width="900px" height="600px">
+<img src=".../../../media/Network_Scan.png" width="900px" height="600px">
 
 <p>Now I can just simply try to enumerate the service and check for any vulnerability, such as CVE if outdated version is used or default password, or bruteforcing. Attacker can use nmap scripts to check if any default creds are in use.</p>
 
-<img src="../media/nmap_nse_scripts.png" width="900px" height="500px">
+<img src="../../../media/nmap_nse_scripts.png" width="900px" height="500px">
 
 <p>So this shows that our system have lack of security. Now what if I just change the default credentials of mysql, will this be enough to get secured. Yes, default credentials will work but did we think that why SQL POD should be accessible by frontend application.</p>
 
@@ -51,9 +51,9 @@ background: '/img/posts/01.jpg'
 
 <p>These are the pods running inside their namespaces.</p>
 
-<img src="../media/frontend_pod.png" width="900px" height="100px"><br><br>
-<img src="../media/backend_pod.png" width="900px" height="100px"><br><br>
-<img src="../media/internal_pod.png" width="900px" height="100px"><br>
+<img src="../../../media/frontend_pod.png" width="900px" height="100px"><br><br>
+<img src="../../../media/backend_pod.png" width="900px" height="100px"><br><br>
+<img src="../../../media/internal_pod.png" width="900px" height="100px"><br>
 
 <p>We have created the namespaces now the next step is to create a network policy that will done the work that what we wanted to be done.
 
@@ -87,7 +87,7 @@ spec:
 
 <p>To very this, we can see the ping results,</p>
 
-<img src="../media/ping results.png" width="800px" height="400px">  
+<img src="../../../media/ping results.png" width="800px" height="400px">  
 
 <p>Here we can verify that the network policy is working accurately and this is how we can minimize the attack surface for the attacker.</p>
 
@@ -123,7 +123,7 @@ spec:
             project: internal -->
 
 
-<img src="../media/mainpod_ping.png" width="800px" height="400px">  
+<img src="../../../media/mainpod_ping.png" width="800px" height="400px">  
 
 <p>That's all for this blog post, the main objective for this blog post is to show the importance of network policy inside kubernetes. </p>
 
