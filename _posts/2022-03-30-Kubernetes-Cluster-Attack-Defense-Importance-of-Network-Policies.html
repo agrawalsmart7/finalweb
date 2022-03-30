@@ -26,7 +26,7 @@ background: '/img/posts/01.jpg'
 
 <p>So this is the application that is running and as this is demonstration purpose, this application is vulnerable to Command Injection. So suppose you somehow get access to their servers, either by Command Injection or any service credentials such as SSH on github, or by Social Engineering.</p> 
 
-<img src="../../../media/rce.png" width="900px" height="100px">
+<img src="../../../media/rce.png" width="700px" height="150px">
 
 <p>Now the first thing the attacker will try to do is either to escalate their privileges or increase the attack surface by survillencing the services and ports running in the network.</p>
 
@@ -48,7 +48,7 @@ background: '/img/posts/01.jpg'
 
 <p>Now what if I just change the default credentials of mysql, will this be enough to get secured from lateral movement. Yes, default credentials will work but did we think that why SQL service should be accessible by frontend application.</p>
 
-<p>Why not we create a backend service application (pod) and only that pod can access the MYsql database that sounds more secure. </p>
+<p>Why not we create a backend service application (pod) and only that pod can access the MYsql database, that sounds more secure, isn't it? </p>
 
 <p>We will try to impose Network Policy so that SQL pod can only accessible by the backend service (not kubernetes service) or POD (in this case). </p>
 
@@ -58,9 +58,9 @@ background: '/img/posts/01.jpg'
   3) internal.<br>
 </p>
 
-<p>Now what I wanted is, pods inside <code>internal</code> Namespace should be accessible only by pods inside <code>backend</code> namespace and not by any pods inside any namespaces.</p>
+<p>Now what I wanted is, pods inside <code>internal</code> Namespace should be accessible only by pods inside <code>backend</code> namespace and not by any pods inside any namespaces. Hope this structure defines it well. </p>
 
-</p><img src="../../../media/infrastructure.png" width="900px" height="100px"> </p>
+</p><img src="../../../media/infrastructure.png" width="900px" height="400px"> </p>
 
 <p>These are the pods running inside their namespaces.</p>
 
@@ -99,7 +99,7 @@ spec:<br>
 
 </code>
 
-<p>If we try to scan the network again we will see that the SQL Pod IP is not present that means, our frontend application can not access the SQL pod.</p>
+<p>If we try to scan the network again via Nmap we will see that the Nmap failed to scan the SQL Pod that means, our frontend application can not access the SQL pod.</p>
 
 <p>To verify this, we can see the ping results,</p>
 
@@ -107,7 +107,7 @@ spec:<br>
 
 <p>Here we can verify that the network policy is working accurately and this is how we can minimize the attack surface for the attacker.</p>
 
-</p>Now if you wanted to allow connections only from specific pod inside specific namespace, this policy will do that. So this policy allows connections to <code>mysql</code> POD from only pod that contains <code>mainbackendp</code> label from the namespace <code>backend</code>.
+</p>Now if you wanted to allow connections only from specific pod inside specific namespace, this policy will do that. This policy allows connections to <code>mysql</code> POD from only pod that contains <code>mainbackendp</code> label from the namespace <code>backend</code>.
 </p>
 <p><b>Network-Policy-2.yaml</b></p>
 
@@ -144,6 +144,7 @@ spec:<br>
 <img src="../../../media/mainpod_ping.png" width="800px" height="400px">  
 
 <p>That's all for this blog post, the main objective for this blog post is to show the importance of network policy inside kubernetes. </p>
+<p> We will talk about the security measures in kubernetes in future posts. </p>
 
 <p>Hope you found this blog useful</p>
 </p>Thanks for your time</p>
