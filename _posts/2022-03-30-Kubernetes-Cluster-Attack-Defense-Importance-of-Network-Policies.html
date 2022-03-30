@@ -18,7 +18,7 @@ background: '/img/posts/01.jpg'
 <p>We will first check the environment where there is no network policy is in place, we will see what can be the consequences and what can the attacker do?
 </p>
 
-<p>Here you can check we have main deployment where the users can access the data and retrieve the data ( More shorten way - The Frontend Application). Now we also can see that there is another POD running in the same namespace `default` as running our frontend application. </p>
+<p>Here you can check we have main deployment where the users can access the data and retrieve the data ( More shorten way - The Frontend Application). Now we also can see that there is another POD running in the same namespace <code>default</code> as running our frontend application. </p>
 
 <img src="../../../media/pods_without_NP.png" width="900px" height="100px">
 
@@ -39,13 +39,19 @@ background: '/img/posts/01.jpg'
 
 <img src="../../../media/nmap_nse_scripts.png" width="900px" height="500px">
 
-<p>So this shows that our system have lack of security. Now what if I just change the default credentials of mysql, will this be enough to get secured. Yes, default credentials will work but did we think that why SQL POD should be accessible by frontend application.</p>
+<p>So this shows that our system have lack of security. Now what if I just change the default credentials of mysql, will this be enough to get secured. Yes, default credentials will work but did we think that why SQL service should be accessible by frontend application.</p>
 
+<p>Why not we create a backend service application (pod) and only that pod can access the MYsql database </p>
 
-<p>We will try to impose Network Policy so that SQL pod can only accessible by the backend service (not kubernetes service :P ) or POD (in this case). I created three namespaces i.e., 1) Frontend 2) backend 3) Internal.
+<p>We will try to impose Network Policy so that SQL pod can only accessible by the backend service (not kubernetes service :P ) or POD (in this case). </p>
+
+<p>So I created three namespaces<br>
+  1) frontend <br>
+  2) backend <br>
+  3) internal.<br>
 </p>
 
-<p>Now what I wanted is pods inside `internal` Namespace should be accessible only by pods inside `backend` namespace and not by any pods inside any namespaces. Hope you got the point.</p>
+<p>Now what I wanted is, pods inside <code>internal</code> Namespace should be accessible only by pods inside <code>backend</code> namespace and not by any pods inside any namespaces. Hope you got the point.</p>
 
 </p>???try to add drawing of the infrastructure</p>
 
@@ -60,38 +66,41 @@ background: '/img/posts/01.jpg'
 </p><b>Network-Policy.yaml</b></p>
 </p>
 
-<!-- apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: mysql
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from: 
-    - namespaceSelector:
-        matchLabels:
-          project: backend
+<code>
+  apiVersion: networking.k8s.io/v1<br>
+kind: NetworkPolicy<br>
+metadata:<br>
+  name: network-policy<br>
+spec:<br>
+  podSelector:<br>
+    matchLabels:<br>
+      app: mysql<br>
+  policyTypes:<br>
+  - Ingress<br>
+  - Egress<br>
+  ingress:<br>
+  - from: <br>
+    - namespaceSelector:<br>
+        matchLabels:<br>
+          project: backend<br>
 
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-            project: internal -->
+  egress:<br>
+  - to:<br>
+    - namespaceSelector:<br>
+        matchLabels:<br>
+            project: internal<br>
+
+</code>
 
 <p>If we try to scan the network again we will see that the SQL Pod IP is not present that means, our frontend application can not access the SQL pod.</p>
 
-<p>To very this, we can see the ping results,</p>
+<p>To verify this, we can see the ping results,</p>
 
 <img src="../../../media/ping results.png" width="800px" height="400px">  
 
 <p>Here we can verify that the network policy is working accurately and this is how we can minimize the attack surface for the attacker.</p>
 
-</p>Now if you wanted to allow connections only from specific pod inside specific namespace, this policy can do that. So this policy allows connections to mysql from only pod that contains `mainbackendp` label from the namespace `backend`.
+</p>Now if you wanted to allow connections only from specific pod inside specific namespace, this policy will do that. So this policy allows connections to mysql from only pod that contains <code>mainbackendp</code> label from the namespace <code>backend</code>.
 </p>
 <p><b>Network-Policy.yaml</b></p>
 
