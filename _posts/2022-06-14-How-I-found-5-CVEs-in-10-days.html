@@ -1,0 +1,129 @@
+---
+layout: post
+title: "How I found 5 CVEs in 10 days"
+subtitle: "Found CVEs"
+date: 2022-06-14 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+
+
+<p>Hello all, </p>
+
+<p>Welcome to blog post. In this blog we will look into how I found 5 CVEs in just 10 days in WordPress Plugins. I will add all the steps that I used to identify these issues.</p>
+
+
+<h2>Target WordPress Plugins</h2>
+
+<p>First I setted up my local wordpress environment where the wordpress site was hosted on my localhost.</p>
+
+</p>I used SCodeScanner to identify the issues. Quick intro, SCodeScanner is a tool that scans the vulnerabilities inside source code. Supported languages are PHP, YAML. More info you can find out <a href="https://github.com/agrawalsmart7/scodescanner">here.</a></p>
+
+<p>I was literally trying hard to find one CVE and here is what I was doing initially. I go to wordpress plugins site, download the plugin, unzip the plugin and run SCodeScanner on the unzipped folder and check the results, and I needed doing it again and again.</p>
+
+<p>Now this was really a very time consuming process, so what I did is I automate the whole part.</p>
+
+<p>I wrote a script that actually downloads the plugins from wordpress site, and unzip the plugins and run SCodeScanner</p>
+
+<p>This is the below script that was doing the downloading part.</p>
+<pre> 
+<code>
+from shutil import ExecError
+import requests
+from bs4 import BeautifulSoup
+import os
+import wget
+from concurrent.futures import ThreadPoolExecutor
+import zipfile
+
+def wordpress_plugin():
+    urls = []
+    for i in range(20, 30):
+        url = "https://wordpress.org/plugins/browse/popular/page/"+str(i)
+        cookies = {"cookies": ""}
+
+        print('On Page - '+ url)
+        result = requests.get(url, cookies=cookies)
+        soup = BeautifulSoup(result.content, 'html.parser')
+
+        results = soup.findAll("h3", {"class": "entry-title"})
+        for strings in results:
+            urls.append(strings.find('a')['href'])
+    return urls
+
+def downloader(urls_to_download):
+
+    req = requests.get(urls_to_download)
+    filename = urls_to_download.split('/')[-1]
+    zipfilepath = '../uploads/zipwordpressplugins/'+filename
+    print("\nDownloading File in - ", str(zipfilepath), "\n")
+    print(urls_to_download, '\n')
+    unzipfilepath = '../uploads/unzipwordpressplugins/'
+    with open(zipfilepath,'wb') as output_file:
+        output_file.write(req.content)
+        print('Downloading Completed')
+        with zipfile.ZipFile(zipfilepath, 'r') as zip_ref:
+            print("Unzipped - ", str(unzipfilepath), str(filename))
+            zip_ref.extractall(unzipfilepath)
+
+
+def download():
+
+    urls_to_download = []
+    urls = wordpress_plugin()
+    print('Got Pluing URLs for Download, Now Downloading Plugins')
+    for pluginurl in urls:
+        result = requests.get(pluginurl)
+        soup = BeautifulSoup(result.content, 'html.parser')
+        results = soup.find_all("a", {"class": "plugin-download button download-button button-large"})
+        for result in results:
+            urls_to_download.append(result.get('href'))
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        executor.map(downloader, urls_to_download)
+
+download()
+
+</code>
+</pre> 
+
+<p> So what the script was doing is, it collects all the plugin URLs from each page that we defined inside range() function. And we sent another HTTP request to download the Plugin by going to the plugin URLs one by one.</p>
+
+<p> For safe side, I downloaded 10 pages one by one. You see range(20, 30), I always need to change this page range. I know I could automate this one too, but by manually I had a better visualization.</p>
+
+<p> Now when I download the 100 plugins (10 plugins in 1 page), I run scodescanner on those plugins but how I get the results file that have the findings, because this will be like very hectic task to check each results inside the directory manually. So, I used built in feature in SCodeScanner that sends result file directly to Jira instance, where I quickly picks the results, start analysing it.</
+<p>This was my dashboard</p>
+
+<img src="../../../media/jira_dashboard.png" width="1000px" height="500px"><br>
+
+<p>This is how the results looks like</p>
+
+<img src="../../../media/results_look.png" width="1000px" height="500px" ><br>
+
+<p> Now my only task was to analysis the results files coming in dashboard and if any valid finding found, then I quickly install the plugin in my localhost hosted wordpress website and started looking for that parameter and exploit.</p>
+
+<p>By doing so, I was able to find 5 valid findings in 5 different reputated plugins. These were the CVEs that were assigned. </p>
+
+<p>
+ - CVE-2022-1465<br>
+ - CVE-2022-1474<br>
+ - CVE-2022-1527<br>
+ - CVE-2022-1532<br>
+ - CVE-2022-1604<br>
+</p>
+
+Snippet that was found by SCodeScanner. I had only these two for two plugins.
+
+<code>30 --         <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>"/></code>
+
+<code>
+
+Variable $_GET['settings_error'] - Vulnerable to Cross-Site Scripting `
+592 -- 				<p><?php echo urldecode_deep( $_GET['settings_error'] ); // phpcs:ignore ?></p>
+
+</code>
+
+
+<p>That's all</p>
+
+<p>Hope you find it useful, also you can try scodescanner and let me know your thoughts/feedbacks/suggestions</p>
+
+<p>Contact me on Twitter at <a href="https://twitter.com/agrawalsmart7">agrawalsmart7</a></p>
