@@ -112,12 +112,12 @@ download()
 
 Snippet that was found by SCodeScanner. I had only these two for two plugins.
 
-<code>30 --         <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>"/></code><br><br>
+<code>30 -- &ltinput type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>"/></code><br><br>
 
 <pre>
 <code>
 Variable $_GET['settings_error'] - Vulnerable to Cross-Site Scripting `
-592 -- 				<p><?php echo urldecode_deep( $_GET['settings_error'] ); // phpcs:ignore ?></p>
+592 -- <?php echo urldecode_deep( $_GET['settings_error'] ); // phpcs:ignore ?>
 
 </code>
 </pre>
