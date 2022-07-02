@@ -23,6 +23,8 @@ background: '/img/posts/01.jpg'
 
 <p><b>Mutate</b>: This checks if the configuration is valid, do Nothing. But if it is invalid, then mutate it to the default pre-defined settings. For ex: If hostPath set to '/' then we can mutate it to '/someotherpath/' so when any POD or Deployment contains hostPath value '/' will turns to '/someotherpath'</p>
 
+<p> We can either create our own Admission Controller, where we can create webhooks where we can define the mutate and validate componets, but this will be a very time consuming but if you wanted to understand from its core, then create it manually. Otherwise we can use Kyverno or OPA.</p>
+
 <h2>Kyverno - Came to Rescue</h2>
 
 <p>Keyverno creates a Admission Controller which intercepts the requests coming from KubeAPI server, and then perform execution of mutate or/and validate policies against the requests. The whole process is automated, you do not need to add the webhooks manually, Kyverno create webhooks automatically.</p>
