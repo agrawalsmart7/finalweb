@@ -55,12 +55,12 @@ rules:
 
 </code>
 </pre>
-<p>So what we will create is a Policy, that will check if any of the misconfigurations were deploying in the cluster, then do not deploy them.</p>
+<p>So what we will create is a Policy, that will check if any of the misconfigurations are trying to deploy in the cluster, do not deploy them.</p>
 
 <p>this is the example of Kyverno Policy</p>
 <pre>
 <code>
-	apiVersion: kyverno.io/v1
+apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: validate-rbac-policies
@@ -75,8 +75,7 @@ spec:
           kinds:
             - Role
             - ClusterRole
-    # preconditions:
-      
+
     validate:
       message: "Do not implement dangerous permissions"
       deny:
@@ -127,7 +126,7 @@ spec:
 
 <p>This Policy deny the deployment of Namespace if any Namespace configuration contains any lable set to privileged.</p>
 
-<p>Now if we try to deploy Namespace with any of these lables, we received the error.</p>
+<p>Now if we try to deploy Namespace (the configuration is on right side in image) with any of these lables, we received the error.</p>
 
 <p><img src="../../../media/privileged_policy_and_namespace2.png" width="900px" height="400px"></p>
 
@@ -144,13 +143,15 @@ spec:
 
 <img src="../../../media/mutate.png" width="900px" height="250px">
 
-<p>In the left hand side, we can see that we added <i>mutate</i> instead of <i>validate</i>. And we defined 'restricted' for the lable 'pod-security.kubernetes.io/enforce'. In the right hand side we can see we are tyring to deploy 'privileged' permission to the namespace.</p>
+<p>In the left hand side, we can see that we added <i>mutate</i> instead of <i>validate</i>. And we defined 'restricted' for the lable 'pod-security.kubernetes.io/enforce'. In the right hand side we can see we are tyring to deploy 'privileged' permission to the namespace. We deployed namespace as below: </p>
 
 <img src="../../../media/no_error_mutate_namespace.png" width="800px" height="50px">
 
 <p>So after deploying the Namespace, we received no error, why? If you have remember we also had the validate policy which checks if 'privileged' is set then don't deploy. So why are not we receiving any error?</p>
 
-<p>Because mutation webhooks always take preference first then validation webhooks. So once we apply the namespace, the mutation webhook called, it changes the 'privileged' value to 'restricted' and then validate webhook called, which checks no 'privileged' was used (as it turns to restricted by mutation webhook) and we recevied no errors.</p>
+<p>Because mutation webhooks always take preference first then validation webhooks. So once we apply the namespace, the mutation webhook called, it changes the 'privileged' value to 'restricted' and then validate webhook called, which checks no 'privileged' was used (as it turns to restricted by mutation webhook) and we recevied no errors. So we successfully mutate objects by using Kyverno.</p>
+
+<p>This could help in securing Kubernetes Environment at the earliest stage. We can use automated tools after this, so if somehow we deployed vulnerable configuration, the automated tools could suggessfully caught the misconfiguration and notified the developer. We will talk these in later posts</p>
 
 <p>That's all folks, I hope you find this useful. Let me know if you have anysuggestions.</p>
 
