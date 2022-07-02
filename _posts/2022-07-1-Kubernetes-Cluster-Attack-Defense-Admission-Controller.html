@@ -1,0 +1,161 @@
+---
+layout: post
+title: "Kubernetes Cluster: Attack and Defense Perspective Part-4"
+subtitle: "Admission Controller"
+date: 2022-07-1 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+<p>Hello all,</p>
+
+<p>This is the fourth blog on the series, this post focuses on Adminission Controller. How it can be useful at cluster level? We will look into practicle examples and their respected results.</p>
+
+<h2>What is Admission Controller?</h2>
+
+<p>But before moving ahead, lets first understand what is Admission Controller</p>
+
+<p>AC is a component in kubernetes which controls the resources at cluster level. Control the resources means, it allows what is allwoed to deploy and what is not. So whenever the developer trying to deploy the restricted configuration, the admission controller gets notified by using the webhook URL and validate or mutate the configurations.</p>
+
+<h2>Validate and Mutate?</h2>
+
+<p>These are two components that are very important to understand.</p>
+
+<p><b>Validate</b>: It checks wheather it validates the configuration is valid or invalid, if it is invalid, do not deploy.</p>
+
+<p><b>Mutate</b>: This checks if the configuration is valid, do Nothing. But if it is invalid, then mutate it to the default pre-defined settings. For ex: If hostPath set to '/' then we can mutate it to '/someotherpath/' so when any POD or Deployment contains hostPath value '/' will turns to '/someotherpath'</p>
+
+<h2>Kyverno - Came to Rescue</h2>
+
+<p>Keyverno creates a Admission Controller which intercepts the requests coming from KubeAPI server, and then perform execution of mutate or/and validate policies against the requests. The whole process is automated, you do not need to add the webhooks manually, Kyverno create webhooks automatically.</p>
+
+<h4> Install Kyverno</h4>
+
+<code>helm repo add kyverno https://kyverno.github.io/kyverno/</code><br>
+<code>helm repo update</code><br>
+<code>helm install kyverno kyverno/kyverno -n kyverno --create-namespace</code><br>
+
+<p>Now we will look into practical examples </p>
+
+<h2>Example #1</h2>
+
+<p>We wanted to ensure that each and every ROLE we created must not contain super admin privileges. </p>
+
+<pre>
+<code>
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["*"]
+
+</code>
+</pre>
+<p>So what we will create is a Policy, that will check if any of the misconfigurations were deploying in the cluster, then do not deploy them.</p>
+
+<p>this is the example of Kyverno Policy</p>
+<pre>
+<code>
+	apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-rbac-policies
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: validate-rbac-policies
+    match:
+      any:
+      - resources:
+          kinds:
+            - Role
+            - ClusterRole
+    # preconditions:
+      
+    validate:
+      message: "Do not implement dangerous permissions"
+      deny:
+        conditions:
+          any:
+            - key: "{{ contains(request.object.rules[].resources[], '*') }}"
+              operator: Equals
+              value: true
+</code>
+</pre>
+<p>
+what exactly this policy is doing is, it match the kind of the configuration, is it a Role or ClusterRole. Once it identified, it sends the validate request to admission controller via HTTP Webhook which validate the Kind against the policies that we defined. We defined <i>deny</i> if only the condiction applied. And the condition here is, it checks the resources if it is set to '*' if it is set to '*' deny the deployment of Role inside the cluster.</p>
+
+<p>And as a result, we received an error</p><br>
+
+<img src="../../../media/validate_error1.png" width="900px" height="600px"><br>
+
+<h2>Example #2</h2>
+
+<p>In this example we will try to validate the POD Security Standards, if set insecurely, do not deploy. </p>
+
+<p>This is the policy that we created</p> 
+<pre>
+<code>
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-ns-permission
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: validate-ns-permission
+    match:
+      any:
+      - resources:
+          kinds:
+            - Namespace
+
+    validate:
+      message: "Privileged PSA Found"
+      pattern:
+        metadata:
+          labels:
+            =(pod-security.kubernetes.io/enforce): "!privileged"
+            =(pod-security.kubernetes.io/audit): "!privileged"
+            =(pod-security.kubernetes.io/warn): "!privileged"
+</code>
+</pre>
+
+<p>This Policy checks if any Namespace contains any lable set to privileged, then deny the deployment of Namespace.</p>
+
+<p>Now if we try to deploy Namespace with any of these lables, we received the error.</p>
+
+<img src="../../../media/privileged_policy_and_namespace2.png" width="900px" height="600px">
+
+<p>The error we received</p>
+
+<img src="../../../media/privileged_namespace_2.png" width="900px" height="600px">
+
+
+<h2>Example #3</h2>
+
+<p>Now we will execute an exmaple of Mutation. Suppose we wanted to deploy the default configurations so whenever the developer applied the configurations that are not the default, the mutationwebhook will convert the configurations to default one. Lets see how</p>
+
+<p>We wanted to change 'privileged' to 'restricted'. So we created a mutate policy.</p>
+
+<img src="../../../media/mutate.png" width="900px" height="600px">
+
+<p>In the left hand side, we can see that we added <i>mutate</i> instead of <i>validate</i>. And we defined 'restricted' for the lable 'pod-security.kubernetes.io/enforce'. In the right hand side we can see we are tyring to deploy 'privileged' permission to the namespace.</p>
+
+<img src="../../../media/no_error_mutate_namespace.png" width="900px" height="600px">
+
+<p>So after deploying the Namespace, we received no error, why? If you have remember we also had the validate policy which checks if 'privileged' is set then don't deploy. So why are not we receiving any error?</p>
+
+<p>Because mutation webhooks always take preference first then validation webhooks. So once we apply the namespace, the mutation webhook called, it changes the 'privileged' value to 'restricted' and then validate webhook called, which checks no 'privileged' was used (as it turns to restricted by mutation webhook) and we recevied no errors.</p>
+
+<p>That's all folks, I hope you find this useful. Let me know if you have anysuggestions.</p>
+
+<p>Contact me on twitter- <a href="https://twitter.com/agrawalsmart7">agrawalsmart7</a> </p>
+
+<p>Have a great weekend</p>
+
+</p>Thanks for your time</p>
