@@ -88,17 +88,16 @@ spec:
 <p>
 what exactly this policy is doing is, it match the kind of the configuration, is it a Role or ClusterRole. Once it identified, it sends the validate request to admission controller via HTTP Webhook which validate the Kind against the policies that we defined. We defined <i>deny</i> if only the condiction applied. And the condition here is, it checks the resources if it is set to '*' if it is set to '*' deny the deployment of Role inside the cluster.</p>
 
-<p>And as a result, we received an error</p><br>
+<p>And as a result, we received an error</p>
 
-<img src="../../../media/validate_error1.png" width="900px" height="600px"><br>
+<p><img src="../../../media/validate_error1.png" width="900px" height="200px"></p>
 
 <h2>Example #2</h2>
 
 <p>In this example we will try to validate the POD Security Standards, if set insecurely, do not deploy. </p>
 
 <p>This is the policy that we created</p> 
-<pre>
-<code>
+<pre><code>
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -122,18 +121,17 @@ spec:
             =(pod-security.kubernetes.io/enforce): "!privileged"
             =(pod-security.kubernetes.io/audit): "!privileged"
             =(pod-security.kubernetes.io/warn): "!privileged"
-</code>
-</pre>
+</code></pre>
 
-<p>This Policy checks if any Namespace contains any lable set to privileged, then deny the deployment of Namespace.</p>
+<p>This Policy deny the deployment of Namespace if any Namespace configuration contains any lable set to privileged.</p>
 
 <p>Now if we try to deploy Namespace with any of these lables, we received the error.</p>
 
-<img src="../../../media/privileged_policy_and_namespace2.png" width="900px" height="600px">
+<p><img src="../../../media/privileged_policy_and_namespace2.png" width="900px" height="400px"></p>
 
 <p>The error we received</p>
 
-<img src="../../../media/privileged_namespace_2.png" width="900px" height="600px">
+<p><img src="../../../media/privileged_namespace_2.png" width="1000px" height="250px"></p>
 
 
 <h2>Example #3</h2>
@@ -142,11 +140,11 @@ spec:
 
 <p>We wanted to change 'privileged' to 'restricted'. So we created a mutate policy.</p>
 
-<img src="../../../media/mutate.png" width="900px" height="600px">
+<img src="../../../media/mutate.png" width="900px" height="250px">
 
 <p>In the left hand side, we can see that we added <i>mutate</i> instead of <i>validate</i>. And we defined 'restricted' for the lable 'pod-security.kubernetes.io/enforce'. In the right hand side we can see we are tyring to deploy 'privileged' permission to the namespace.</p>
 
-<img src="../../../media/no_error_mutate_namespace.png" width="900px" height="600px">
+<img src="../../../media/no_error_mutate_namespace.png" width="800px" height="50px">
 
 <p>So after deploying the Namespace, we received no error, why? If you have remember we also had the validate policy which checks if 'privileged' is set then don't deploy. So why are not we receiving any error?</p>
 
