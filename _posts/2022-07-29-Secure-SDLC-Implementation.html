@@ -1,0 +1,107 @@
+---
+layout: post
+title: "Secure SDLC Implementation"
+subtitle: "Integration Security Scanner Tools in SDLC"
+date: 2022-07-29 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+<p>Hello all,</p>
+<p>Welcome to the post. In this post we will learn how we can integrate security automation tools which will identify the vulnerabilities in the initial phase. Through this we will see how implement security in SDLC becomes most important task for every product.</p>
+
+<p> This is our DevOps implementation, which doesn't contain any security implementation.</p>
+
+<p>
+	<img src="../media/devops_implementation.png" width="900" height="500">
+</p>
+
+<p>So this will deploy your product securely as we are integrating manual penetration testing at the staging server but there is one problem, yes we are integrating manual penetration testing which could identify the vulnerabilties but what if we cover most of the vulnerabilites at the most initial stage? Then when we come into manual penetration testing, the tester can potentially focus on more advance exploit such as business logic issues, Race conditions, Authorization issues, etc. So don't you think this apporach is more efficient and effective?. Yes it is, let's see how.</p>
+
+<p> But first, I want you to take a look into the flow chart that implemented security in devops implementation. </p>
+
+<p><img src="../media/devsecops_implementation.png" width="1100" height="700"></p>
+
+<p>We will break down this post in three stages but our target goal is to DEPLOY SECURE CODE IN PROD</p>
+
+<h2>Stage 1 - Secret Scanning</h2>
+
+<p>I literally found critical sensitive information through which if attacker found them, he/she could kneel down the companies. So these information could be identified by just using only GitHub. So you can see how this step is super important.</p>
+
+<p>There are lot of cases we require AWS Keys to be used inside code, so what dev do is they hardcoded the Keys or any other service API keys just to make things working. Now there is a high probaility that they commited these keys along with the code on Github, Gitlab, Bitbucket or similar service. Now this aries vulnerability, as your sensitive API key is now public/private, anyone could use it. In case of private, other employees could also see it. At the end, this is not a safe implementation. </p>
+
+<p>So Secret scanning comes into picture. We will use trufflehog for scanning secrets.</p>
+
+<h3>Stage 1 - Failed Build results</h3>
+
+Once we commited to Github, jenkins pulls the code and run the stage 1, but stage 1 was failed.
+
+<p><img src="../media/stage_1_build_failed.png" width="900" height=""></p>
+
+<p>As we can see there is one file called 'connection.php' which contains the AWS keys, so we need to remove them</p>
+
+<p>Also If you observer the above flow, you will see that after build failed, we create slack alert. So this is the slack alert that the developers will get.</p>
+
+<p><img src="../media/slack_alert_stage1_error.png" width="700" height=""></p>
+
+<h3>Stage 1 - SUCCESS</h3>
+
+After we remove the keys and use other secure ways like vault or services on AWS, this is the build result on jenkins console.
+
+<p><img src="../media/stage_1_jenkins_success.png" width="800" height=""></p>
+
+<p>Please observe the last second line, it is triggering new build. <code>Stage_2-SCA_Scanning</code> ONLY when <code>stage 1</code> is good to go.</p>
+
+<h2> Stage 2 - Software Composition Analysis (SCA)</h2>
+
+<p>In this stage, I introduce SCA scanning which will scan third party librarires for vulnerabilities. We may see lot of times that the application supports number of third party library such as jQuery and the application might used outdated version of library, these kind of vulnerabilities or the potential area are ignore because of the severity or less importance, but this could actually leads to potential vulnerability. In short we can't afford to ignore this area, so SCA plays an important role.</p>
+
+<p>I used OWASP Dependency check where it checks what outdated version of library is being used and gives us a result in XML format. So in our jenkins pipeline we will check if any vulnerability found, make the build unstable and stop building the other pipeline, and at the end stop deploying the code on stage server. </p>
+
+<h3>Stage 2 - Failed Build Results</h3>
+
+<p><img src="../media/stage_2_jenkins_error.png" width="1000" height=""></p>
+
+So this build found jQuery was vulnerable to vulnerabilities, and this failed the build and generate the slack alert. And most importantly, this do not let the run the stage 3, which ultimately stops the deployment of the vulnerable code.
+
+<p><img src="../media/stage_2_slack_msg.png" width="1000" height=""></p>
+
+<p>This creates the slack alert with the output file that OWASP generates this will allow the developers to quickly mitigate the issue. So as I did, I updated the jQuery to latest version and here is the result</p>
+
+<h3>Stage 2 - SUCCESS </h3>
+
+<p><img src="../media/stage_2_jenkins_success.png" width="1000" height=""></p>
+
+<p>Please observe the last second line, it is triggering <code>stage 3</code> ONLY when <code>stage 2</code> is secure.</p>
+
+
+<h3>Stage 3 - Source Code Scanning using SCodeScanner</h3>
+
+<p>This phase is very important, we all want to mitigate risk as quickly as we can because this will save lot of cost. Here cost doesn't mean only with money but with time and user experience. So the best ways to mitigate the risk is to scan the source code for the vulnerability. Here automated source code scanning can't find business logic issues and Access Controll issues but it will identify most of the vulnerabilities at the initial phase, and this will be a lot for us. Right?</p>
+
+<p>So I used SCodeScanner for scanning the sourecode files, and again if any vulnerability found, don't build any other pipeline, basically don't deploy the code on stage server.</p>
+
+<h3>Stage 3 - Failed build results</h3>
+
+<p><img src="../media/stage_3_jenkins_error.png" width="1000" height=""></p>
+
+<p>As we can see, SCodeSCanner identify some vulnerabilies and created the slack alert to developers so they could quickly patch those vulnerabilities. Slack alert contains the output file that created by SCodeSCanner</p>
+
+
+<p><img src="../media/stage_3_slack_msg.png" width="1000" height=""></p>
+
+<h3>Stage 3 - SUCCESS</h3>
+
+<p>So once vulnerabililty patched, we can deploy the code on stage server for manual penetration testing and then after mitigiating those vulnerabilities, and re-run the whole cycle, we can deploy code on prod server. We will see in the next post</p>
+
+<p>This is the chain that I found to be useful, let me know if I missed anything here. </p>
+
+<p>Thanks for reading the post</p>
+
+<p>I hope you find this useful. Let me know if you have anysuggestions.</p>
+
+<p>Contact me on twitter- <a href="https://twitter.com/agrawalsmart7">agrawalsmart7</a> </p>
+
+<p>Have a great weekend</p>
+
+</p>Thanks for your time</p>
+
+
