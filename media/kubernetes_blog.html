@@ -1,0 +1,105 @@
+---
+layout: post
+title: "Kubernetes Cluster: Attack and Defense Perspective Part-5"
+subtitle: "Mitigating Supply Chain attack by verifying the images at Admission Controller"
+date: 2023-08-14 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+<p>Hello everyone,</p>
+
+<p>Welcome to this post, the fifth part of the series "Kubernetes Attack and Defense Perspective." In this post, we will focus on the concept of supply chain attacks, their potential to compromise your entire infrastructure, and how to mitigate them.</p>
+
+<p>We will primarily focus the mitigation aspect, as that is the scope of this post.</p>
+
+<p> let's dive right in.</p>
+
+<h2>What is the Supply Chain?</h2>
+
+	<p>A supply chain attack is an attack where malicious code is introduced into an organization's codebase. This malicious code then executes within the targeted organization's code. The malicious code can take various forms, including providing a reverse shell or extracting data from computer systems. In the context of Kubernetes, each POD within Kubernetes employs an image. It is critically important to verify that the image used in your Kubernetes environment is indeed the intended image and not a manipulated image controlled by an attacker. A very famous example of a supply chain attack is the Dependency Confusion attack. Let's understanding this attack.</p>
+
+<h2>How Does Dependency Confusion Work?</h2>
+	<p>We import packages in Python like this: ```import packagename```. As you may know, anyone can upload a package to the public Python Package Index (PyPI). Similarly, an attacker can upload a package named 'packagename' to PyPI. Consequently, if you attempt to install your 'packagename' using pip, you might install the attacker's code instead of your own. This can potentially lead to compromising your environment. This provides a high-level overview of the dependency confusion attack.</p>
+
+	<p>The same principle applies to Kubernetes images. Given that Docker Hub serves as a centralized repository for Docker images, consider a scenario where an unauthorized individual gains access to your Docker Hub account. They could create a version of your image, for instance, 'packagename:1.2,' which includes malicious code. Consequently, if you use this image when creating a POD, you would inadvertently execute the attacker's malicious code within your environment. These vulnerabilities arise due to the absence of integrity checks, making it difficult to differentiate between your genuine image and an image manipulated by an attacker. This is where image signing comes to the rescue.</p>
+
+<h2>Image Signing</h2>
+	<p>Let's explore how image signing addresses the vulnerabilities outlined above through practical examples.</p>
+	<p>We will start by pushing our image to Docker Hub, as shown in the figure below:</p>
+	<img src="pushed to hub.png">
+	<p>Initially, we will sign the image utilized within the POD.</p>
+
+<pre><code>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-app
+  template:
+    metadata:
+      labels:
+        app: php-app
+    spec:
+      containers:
+        - name: php-app-container
+          image: testingpurpose1212/canyouverify:1.1
+          ports:
+            - containerPort: 80
+
+</code></pre>
+
+<p>As you can see in the image, we are using 'canyouverify:1.1', that is coming from our hub account which is 'testingpurpose1212' </p>
+
+<p>Now we will sign the image with the help of cosign, as shown in the figure below.</p>
+
+<img src="signing_image.png">
+
+<p>Note: I created public, private key pair we will sign the image from private key, and we will verify it via public key.</p>
+
+<p>Now our signed image is in the docker hub, now its time to create a policy so that when ever you try to create a pod with the image, the image first will verify and then only it will deploy in the environment. We will use Keyverno which will verify the image by using public key.</p>
+
+<p>This is the policy that will verify the our image.</p>
+
+<img src="correct_policy_poc.png">
+
+<pre><code>
+	apiVersion: kyverno.io/v1
+	kind: ClusterPolicy
+	metadata:
+	  name: check-image
+	spec:
+	  validationFailureAction: Enforce
+	  background: false
+	  failurePolicy: Fail
+	  rules:
+	    - name: check-image
+	      match:  
+	        any:
+	        - resources:
+	            kinds:
+	              - Pod
+	      verifyImages:
+	      
+	        - image: "*"
+	          key: |-
+	            -----BEGIN PUBLIC KEY-----
+	            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6qT2SrPWOJZO+os36u7LGjN1IOmc
+	            LGwLgo87nOaIlRjwEcxlYjUsMPUMbgCVZE3wkGpKKTgrIQV01KIRGKueSQ==
+	            -----END PUBLIC KEY-----                
+</code></pre>
+
+<p>Now, as you can see if I try to run image other than that, I failed to deploy it in environment. </p>
+
+<img src="verify_fialed.png">
+
+<p>If I try to use my image in POD I was able to successfully created the POD, because that's the exact image we uploaded in docker hub and that image was verify by our keyverno policy.</p>
+
+<img src="correct_policy_poc_created.png">
+
+<p>Hence, verifying the image mechanism in kubernetes environment is really really important. I personally loved Keyverno because its easy to operate and can easily configure.</p>
+
+<p>Thanks thats all for this post.</p>
+<p>Let me know if you face any error.</p>
