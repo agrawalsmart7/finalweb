@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "AWS: Making an security automation flow with Event Bridge, Lambda, IAM."
-subtitle: "Experiment number - 1"
+title: "AWS - Experiment number - 1"
+subtitle: "AWS: Making an security automation flow with Event Bridge, Lambda, IAM."
 date: 2023-08-14 23:45:13 -0400
 background: '/img/posts/01.jpg'
 ---
@@ -18,6 +18,9 @@ background: '/img/posts/01.jpg'
 
 <img src="../../../media/infra.png" height="" width="">
 
+
+<h2>EventBridge</h2>
+
 <p>
 	
 It all begins by creating an Event Rule within the AWS EventBridge service. This service enables you to trigger specific events in AWS when you configure the events. Additionally, you'll need to define targets so that when an event occurs, the designated target is triggered. Target could be anything - Lambda, SNS, SQS or others.  
@@ -25,7 +28,7 @@ It all begins by creating an Event Rule within the AWS EventBridge service. This
 
 <b>Note:</b> <p>We are running this whole flow on 'us-west-region'</p>
 <p>First we will create a rule. This is the below rule that will trigger events of 'CreateUser'.</p>
-
+<pre>
 <code>
     {
   "source": ["aws.iam"],
@@ -36,6 +39,7 @@ It all begins by creating an Event Rule within the AWS EventBridge service. This
   }
 }
 </code>
+</pre>
 
 <p>Now we can see in AWS, that we have created a rule 'rule-to-trigger-lambda-function'</p>
 <img src="../../../rule_with_an_event_pattern.png" height="" width="">
@@ -49,11 +53,10 @@ It all begins by creating an Event Rule within the AWS EventBridge service. This
 <p>My goal for the Lambda function is to, list all the users within the AWS account and remove the 'AdministratorAccess' policy from their permissions. This way, whenever a user attempts to grant or request admin access to the AWS account, the administrator will receive a notification. Instead of manual intervention, Lambda will take care of automatically revoking those permissions from the user's account. </p>
 
 <p>Lambda Code can be found below: </p>
-
+<pre>
 <code>
 
-	
-	import boto3
+import boto3
 
 def remove_administrator_access(username):
     try:
@@ -90,12 +93,13 @@ def lambda_handler(event, context):
         print(f"An error occurred: {str(e)}")
 
 </code>
+</pre>
 
 <img src="../../../media/lambda.png" height="" width="">
 
 
 <p> Now, let's set up Lambda. There are two essential things to do:<br>1. Setting up the Trigger: This decides who can activate Lambda. It's like giving permission to other services to use this function.<br>2.Creating a Resource-Based Policy: When you're done, a policy is either created automatically or you may need to make one. You can find detailed instructions in the reference below. <br>What this policy does is allow EventBridge to use the 'myfunc' function, making it easy for EventBridge to trigger your function</p>
-
+<pre>
 <code>Resource Based Policy<br>
 	
 	{
@@ -119,14 +123,14 @@ def lambda_handler(event, context):
   ]
 }
 
-
+</pre>
 </code>	
 
 <p>Now, if you read lambda code carefully, you'll notice that Lambda requires certain permissions to execute the code successfully. For the sake of demonstration, I've granted full IAM access to the Lambda function. Otherwise its always a good practice to give only required permissions. </p>
 
 <p>So I think we are all set here, lets create a user and attach 'AdministratorAccess' policy with it and see if permissions revoked automatically or not.</p>
 
-<img src="../../../media/adminuser.png" height="" width="">
+<img src="../../../media/adminuser.png" height="500" width="">
 
 <p>We created 'adminuser' account and with AdministratorAccess policy attached, but nothing happens. The policy failed to revoke access because Lambda didn't execute; the event didn't trigger. Why? </p>
 
@@ -139,13 +143,13 @@ def lambda_handler(event, context):
 
 <p>I checked whats happening behind the scenes and found out that, Lambda makes logs in cloudwatch log group with function name, and it clearly shows that my lambda worked successfully, as shown in the figure below.</p>
 
-<img src="../../../media/logs_results_valid.png" height="" width="">
+<img src="../../../media/logs_results_valid.png" height="500" width="">
 
 <p>Now this might looks very wierd because there might be a requirement for the user to use 'AdministratorAccess' permission, so in this case what you can do is you have to make sure that the user should be a part of that group. In the code you can check if user is in the admin group then do nothing otherwise revoke permission.</p>
 
 <p>You can see for each user creation lambda will run, and you will charge for each run. So it might cost you very high, right? So instead of running lambda on the basis of matched events, its better to run it on Schedule basis for the same types of conditions, like run once in two days or twice a week. I am not suggesting you to always schedule to run lambda, sometimes event based trigger are useful so you need to understand your requirement and configure rule and lambda on the basis of it.</p>
 
-<img src="../../../media/rule_with_an_event_pattern.png" width="" height="">
+<img src="../../../media/rule_with_an_event_pattern.png" width="" height="400">
 
 <p>We can see the option 'schedule' over here, and its very straight forward to configure it, you just need to mention day, date and time. </p>
 
