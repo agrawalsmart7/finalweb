@@ -8,7 +8,7 @@ background: '/img/posts/01.jpg'
 <p>Hi, thanks for visiting the post.</p>
 <p>In this post we will see one of my experiment which I performed on Cloud AWS. For this experiment, I used these services. </p>
 
-<p>IAM<br>Event Bridge<br>Lambda<br>CloudWatch Logs<br>SNS (Optional)</p>
+<p>1). IAM<br>2). Event Bridge<br>3). Lambda<br>4).CloudWatch Logs<br>5). SNS (Optional)</p>
 
 <p>The objective for the experiment was to make a flow, when any user gets AdministratorAccess permission in AWS, the permission should removed automatically. 
 
@@ -16,7 +16,7 @@ background: '/img/posts/01.jpg'
 
 </p>
 
-<img src="../../../media/infra.png" height="" width="">
+<img src="../../../media/infra.png" height="450" width="">
 
 
 <h2>EventBridge</h2>
@@ -132,8 +132,11 @@ def lambda_handler(event, context):
 
 <img src="../../../media/adminuser.png" height="500" width="">
 
+<h2>But one problem - </h2>
+
 <p>We created 'adminuser' account and with AdministratorAccess policy attached, but nothing happens. The policy failed to revoke access because Lambda didn't execute; the event didn't trigger. Why? </p>
 
+<h2>Reason - </h2>
 <p>The reason is that IAM generates CloudTrail events only in the 'us-east-1' region, as mentioned in a Stack Overflow response. To access these events, we need to create EventBridge rule only in us-east-1 region so it can access the events. Why? I frankly don't have exact answer. If you know more, please comment on the LinkedIn post or send me a direct message — I'd appreciate the insight..</p>
     
 <p>So I created everything again in 'us-east-1' region and then I created same user with same policy attached, and boom. It worked.</p>
@@ -151,6 +154,7 @@ def lambda_handler(event, context):
 
 <img src="../../../media/rule_with_an_event_pattern.png" width="" height="400">
 
+<h2>My observation - </h2>
 <p>We can see the option 'schedule' over here, and its very straight forward to configure it, you just need to mention day, date and time. </p>
 
 <p>So that's all for this experiment, now is there anything you want to me to suggest what should I do next? I would love to hear.</p>
