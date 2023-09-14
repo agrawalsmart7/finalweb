@@ -26,7 +26,7 @@ background: '/img/posts/01.jpg'
 It all begins by creating an Event Rule within the AWS EventBridge service. This service enables you to trigger specific events in AWS when you configure the events. Additionally, you'll need to define targets so that when an event occurs, the designated target is triggered. Target could be anything - Lambda, SNS, SQS or others.  
 </p>
 
-<b>Note:</b> <p>We are running this whole flow on 'us-west-region'</p>
+<p><b>Note:</b> We are running this whole flow on 'us-west-1' region</p>
 <p>First we will create a rule. This is the below rule that will trigger events of 'CreateUser'.</p>
 <pre>
 <code>
@@ -130,7 +130,7 @@ def lambda_handler(event, context):
 
 <p>So I think we are all set here, lets create a user and attach 'AdministratorAccess' policy with it and see if permissions revoked automatically or not.</p>
 
-<img src="../../../media/adminuser.png" height="500" width="">
+<img src="../../../media/adminuser.png" height="500" width=""><br>
 
 <h2>But one problem - </h2>
 
@@ -148,13 +148,16 @@ def lambda_handler(event, context):
 
 <img src="../../../media/logs_results_valid.png" height="500" width="">
 
-<p>Now this might looks very wierd because there might be a requirement for the user to use 'AdministratorAccess' permission, so in this case what you can do is you have to make sure that the user should be a part of that group. In the code you can check if user is in the admin group then do nothing otherwise revoke permission.</p>
+<h2>What if Admin access is required? - </h2>
+
+<p>In some case, there might be a requirement for the user to use 'AdministratorAccess' permission, so in this case what you can do is, you have to make sure that the user should be a part of admin group. In the code you can check if user is in the admin group then do nothing otherwise revoke permission.</p>
+
+<h2>My observation - </h2>
 
 <p>You can see for each user creation lambda will run, and you will charge for each run. So it might cost you very high, right? So instead of running lambda on the basis of matched events, its better to run it on Schedule basis for the same types of conditions, like run once in two days or twice a week. I am not suggesting you to always schedule to run lambda, sometimes event based trigger are useful so you need to understand your requirement and configure rule and lambda on the basis of it.</p>
 
 <img src="../../../media/rule_with_an_event_pattern.png" width="" height="400">
 
-<h2>My observation - </h2>
 <p>We can see the option 'schedule' over here, and its very straight forward to configure it, you just need to mention day, date and time. </p>
 
 <p>So that's all for this experiment, now is there anything you want to me to suggest what should I do next? I would love to hear.</p>
