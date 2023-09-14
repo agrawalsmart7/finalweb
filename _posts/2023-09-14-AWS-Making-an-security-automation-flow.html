@@ -138,7 +138,8 @@ def lambda_handler(event, context):
 
 <h2>Reason - </h2>
 <p>The reason is that IAM generates CloudTrail events only in the 'us-east-1' region, as mentioned in a Stack Overflow response. To access these events, we need to create EventBridge rule only in us-east-1 region so it can access the events. Why? I frankly don't have exact answer. If you know more, please comment on the LinkedIn post or send me a direct message — I'd appreciate the insight..</p>
-    
+ 
+<p>Reference: <a href="https://stackoverflow.com/questions/67093964/cloudwatch-event-rule-not-supporting-iam-events">https://stackoverflow.com/questions/67093964/cloudwatch-event-rule-not-supporting-iam-events</a> </p>
 <p>So I created everything again in 'us-east-1' region and then I created same user with same policy attached, and boom. It worked.</p>
 
 <p>After some refreshes, those policy gets revoked from the user account, as shown in the figure</p>
