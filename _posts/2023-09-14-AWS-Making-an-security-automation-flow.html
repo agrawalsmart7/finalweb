@@ -1,0 +1,154 @@
+---
+layout: post
+title: "AWS: Making an security automation flow with Event Bridge, Lambda, IAM."
+subtitle: "Experiment number - 1"
+date: 2023-08-14 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+<p>Hi, thanks for visiting the post.</p>
+<p>In this post we will see one of my experiment which I performed on Cloud AWS. For this experiment, I used these services. </p>
+
+<p>IAM<br>Event Bridge<br>Lambda<br>CloudWatch Logs<br>SNS (Optional)</p>
+
+<p>The objective for the experiment was to make a flow, when any user gets AdministratorAccess permission in AWS, the permission should removed automatically. 
+
+<!-- For this sake of this blog, I am invoking the permissions completely but in real, so it might be not feasiable step, so what should we do that?. We will understand what we can do for this condition in lambda section.  -->
+
+</p>
+
+<img src="../../../media/infra.png" height="" width="">
+
+<p>
+	
+It all begins by creating an Event Rule within the AWS EventBridge service. This service enables you to trigger specific events in AWS when you configure the events. Additionally, you'll need to define targets so that when an event occurs, the designated target is triggered. Target could be anything - Lambda, SNS, SQS or others.  
+</p>
+
+<b>Note:</b> <p>We are running this whole flow on 'us-west-region'</p>
+<p>First we will create a rule. This is the below rule that will trigger events of 'CreateUser'.</p>
+
+<code>
+    {
+  "source": ["aws.iam"],
+  "detail-type": ["AWS API Call via CloudTrail"],
+  "detail": {
+    "eventSource": ["iam.amazonaws.com"],
+    "eventName": ["CreateUser"]
+  }
+}
+</code>
+
+<p>Now we can see in AWS, that we have created a rule 'rule-to-trigger-lambda-function'</p>
+<img src="../../../rule_with_an_event_pattern.png" height="" width="">
+
+<p>Next, it's crucial to set a target because once the rule is triggered, EventBridge will search for the designated target to execute. In this case, I've chosen Lambda</p>
+
+<img src="../../../media/targets_tab_rules.png" height="" width="">
+
+<p>We can observe that the target I've configured is 'myfunc,' which is the name of Lambda function (please forgive my unconventional naming choice)</p>
+
+<p>My goal for the Lambda function is to, list all the users within the AWS account and remove the 'AdministratorAccess' policy from their permissions. This way, whenever a user attempts to grant or request admin access to the AWS account, the administrator will receive a notification. Instead of manual intervention, Lambda will take care of automatically revoking those permissions from the user's account. </p>
+
+<p>Lambda Code can be found below: </p>
+
+<code>
+
+	
+	import boto3
+
+def remove_administrator_access(username):
+    try:
+        iam_client = boto3.client('iam')
+
+        # List user policies
+        response = iam_client.list_attached_user_policies(UserName=username)
+        
+        for policy in response['AttachedPolicies']:
+            if policy['PolicyName'] == 'AdministratorAccess':
+                # Detach the policy
+                iam_client.detach_user_policy(UserName=username, PolicyArn=policy['PolicyArn'])
+                print(f"Removed administratoraccess policy from user: {username}")
+                break
+        else:
+            print(f"No administratoraccess policy found for user: {username}")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+def lambda_handler(event, context):
+    iam_client = boto3.client('iam')
+
+    try:
+        # List all users
+        response = iam_client.list_users()
+
+        for user in response['Users']:
+            username = user['UserName']
+            print(f"Processing user: {username}")
+            remove_administrator_access(username)
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+</code>
+
+<img src="../../../media/lambda.png" height="" width="">
+
+
+<p> Now, let's set up Lambda. There are two essential things to do:<br>1. Setting up the Trigger: This decides who can activate Lambda. It's like giving permission to other services to use this function.<br>2.Creating a Resource-Based Policy: When you're done, a policy is either created automatically or you may need to make one. You can find detailed instructions in the reference below. <br>What this policy does is allow EventBridge to use the 'myfunc' function, making it easy for EventBridge to trigger your function</p>
+
+<code>Resource Based Policy<br>
+	
+	{
+  "Version": "2012-10-17",
+  "Id": "default",
+  "Statement": [
+    {
+      "Sid": "AWSEvents_rule-to-trigger-lambda-function_Id4893138f-d1e9-400b-9077-3c2b0b6505e3",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "events.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:us-east-1:509108488717:function:myfunc",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:events:us-east-1:509108488717:rule/rule-to-trigger-lambda-function"
+        }
+      }
+    }
+  ]
+}
+
+
+</code>	
+
+<p>Now, if you read lambda code carefully, you'll notice that Lambda requires certain permissions to execute the code successfully. For the sake of demonstration, I've granted full IAM access to the Lambda function. Otherwise its always a good practice to give only required permissions. </p>
+
+<p>So I think we are all set here, lets create a user and attach 'AdministratorAccess' policy with it and see if permissions revoked automatically or not.</p>
+
+<img src="../../../media/adminuser.png" height="" width="">
+
+<p>We created 'adminuser' account and with AdministratorAccess policy attached, but nothing happens. The policy failed to revoke access because Lambda didn't execute; the event didn't trigger. Why? </p>
+
+<p>The reason is that IAM generates CloudTrail events only in the 'us-east-1' region, as mentioned in a Stack Overflow response. To access these events, we need to create EventBridge rule only in us-east-1 region so it can access the events. Why? I frankly don't have exact answer. If you know more, please comment on the LinkedIn post or send me a direct message — I'd appreciate the insight..</p>
+    
+<p>So I created everything again in 'us-east-1' region and then I created same user with same policy attached, and boom. It worked.</p>
+
+<p>After some refreshes, those policy gets revoked from the user account, as shown in the figure</p>
+<img src="../../../media/no_resource_to_display.png" height="" width="">
+
+<p>I checked whats happening behind the scenes and found out that, Lambda makes logs in cloudwatch log group with function name, and it clearly shows that my lambda worked successfully, as shown in the figure below.</p>
+
+<img src="../../../media/logs_results_valid.png" height="" width="">
+
+<p>Now this might looks very wierd because there might be a requirement for the user to use 'AdministratorAccess' permission, so in this case what you can do is you have to make sure that the user should be a part of that group. In the code you can check if user is in the admin group then do nothing otherwise revoke permission.</p>
+
+<p>You can see for each user creation lambda will run, and you will charge for each run. So it might cost you very high, right? So instead of running lambda on the basis of matched events, its better to run it on Schedule basis for the same types of conditions, like run once in two days or twice a week. I am not suggesting you to always schedule to run lambda, sometimes event based trigger are useful so you need to understand your requirement and configure rule and lambda on the basis of it.</p>
+
+<img src="../../../media/rule_with_an_event_pattern.png" width="" height="">
+
+<p>We can see the option 'schedule' over here, and its very straight forward to configure it, you just need to mention day, date and time. </p>
+
+<p>So that's all for this experiment, now is there anything you want to me to suggest what should I do next? I would love to hear.</p>
+
+<p>Thanks for your time </p>
