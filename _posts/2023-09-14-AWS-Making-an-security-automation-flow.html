@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "AWS - Experiment number - 1"
+title: "AWS - Security Automation - Exp 1"
 subtitle: "AWS: Making an Security Automation Flow with Event Bridge, Lambda, IAM."
 date: 2023-08-14 23:45:13 -0400
 background: '/img/posts/01.jpg'
@@ -142,7 +142,7 @@ def lambda_handler(event, context):
 <p>We created 'adminuser' account and with AdministratorAccess policy attached, but nothing happens. The policy failed to revoke access because Lambda didn't execute; the event didn't trigger. Why? </p>
 
 <h2>Reason - </h2>
-<p>The reason is that IAM generates CloudTrail events only in the 'us-east-1' region, as mentioned in a Stack Overflow response. To access these events, we need to create EventBridge rule only in us-east-1 region so it can access the events. Why? I frankly don't have exact answer. If you know more, please comment on the LinkedIn post or send me a direct message — I'd appreciate the insight..</p>
+<p>The reason is that IAM generates CloudTrail events only in the 'us-east-1' region, as mentioned in a Stack Overflow  (thanks Krutarth Shukla for sharing this resource.). To access these events, we need to create EventBridge rule only in us-east-1 region so it can access the events. Why? I frankly don't have exact answer. If you know more, please comment on the LinkedIn post or send me a direct message — I'd appreciate the insight..</p>
  
 <p>Reference: <a href="https://stackoverflow.com/questions/67093964/cloudwatch-event-rule-not-supporting-iam-events">https://stackoverflow.com/questions/67093964/cloudwatch-event-rule-not-supporting-iam-events</a> </p>
 <p>So I created everything again in 'us-east-1' region and then I created same user with same policy attached, and boom. It worked.</p>
