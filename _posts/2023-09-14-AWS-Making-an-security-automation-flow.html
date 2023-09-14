@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "AWS - Experiment number - 1"
-subtitle: "AWS: Making an security automation flow with Event Bridge, Lambda, IAM."
+subtitle: "AWS: Making an Security Automation Flow with Event Bridge, Lambda, IAM."
 date: 2023-08-14 23:45:13 -0400
 background: '/img/posts/01.jpg'
 ---
@@ -48,7 +48,7 @@ It all begins by creating an Event Rule within the AWS EventBridge service. This
 
 <img src="../../../media/targets_tab_rules.png" height="200" width="">
 
-<p>We can observe that the target I've configured is 'myfunc,' which is the name of Lambda function (please forgive my unconventional naming choice)</p>
+<p>We can observe that the target I've configured is 'myfunc', which is the name of Lambda function (please forgive my unconventional naming choice)</p>
 
 <p>My goal for the Lambda function is to, list all the users within the AWS account and remove the 'AdministratorAccess' policy from their permissions. This way, whenever a user attempts to grant or request admin access to the AWS account, the administrator will receive a notification. Instead of manual intervention, Lambda will take care of automatically revoking those permissions from the user's account. </p>
 
@@ -100,7 +100,7 @@ def lambda_handler(event, context):
 
 <p> Now, let's set up Lambda. There are two essential things to do:
   
-  <br><br>1. Setting up the Trigger: This decides who can activate Lambda. It's like giving permission to other services to use this function.<br>
+  <br><br>1. Setting up the Trigger: This decides who can activate Lambda. It's like giving permission to other services to use this function.<br>    
   <br>2.Creating a Resource-Based Policy: When you're done, a policy is either created automatically or you may need to make one. You can find detailed instructions in the reference below. <br><br>What this policy does is allow EventBridge to use the 'myfunc' function, making it easy for EventBridge to trigger your function</p>
 <pre>
 <code>Resource Based Policy<br>
