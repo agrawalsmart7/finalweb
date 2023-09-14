@@ -98,7 +98,10 @@ def lambda_handler(event, context):
 <img src="../../../media/lambda.png" height="" width="">
 
 
-<p> Now, let's set up Lambda. There are two essential things to do:<br>1. Setting up the Trigger: This decides who can activate Lambda. It's like giving permission to other services to use this function.<br>2.Creating a Resource-Based Policy: When you're done, a policy is either created automatically or you may need to make one. You can find detailed instructions in the reference below. <br>What this policy does is allow EventBridge to use the 'myfunc' function, making it easy for EventBridge to trigger your function</p>
+<p> Now, let's set up Lambda. There are two essential things to do:
+  
+  <br><br>1. Setting up the Trigger: This decides who can activate Lambda. It's like giving permission to other services to use this function.<br>
+  <br>2.Creating a Resource-Based Policy: When you're done, a policy is either created automatically or you may need to make one. You can find detailed instructions in the reference below. <br><br>What this policy does is allow EventBridge to use the 'myfunc' function, making it easy for EventBridge to trigger your function</p>
 <pre>
 <code>Resource Based Policy<br>
 	
@@ -130,7 +133,9 @@ def lambda_handler(event, context):
 
 <p>So I think we are all set here, lets create a user and attach 'AdministratorAccess' policy with it and see if permissions revoked automatically or not.</p>
 
-<img src="../../../media/adminuser.png" height="500" width=""><br>
+<img src="../../../media/adminuser.png" height="500" width="">
+
+<br><br>
 
 <h2>But one problem - </h2>
 
