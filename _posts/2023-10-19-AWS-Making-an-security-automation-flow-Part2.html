@@ -41,19 +41,19 @@ background: '/img/posts/01.jpg'
 
 <h2>AWS Config Auto-Remediation</h2>
 
-<p>AWS Config not only helps to detect the misconfiguration but also provide us a feature to remediate the issue automatically. This method is straightforward. You select a rule and specify its remediation. In this case, we need to upgrade to IMDSv2 to remediate the use of IMDSv1 in instances. We choose the remediation 'AWSConfigRemediation-EnforceIMDSv2'.</p>
+<p>AWS Config not only helps to detect the misconfiguration but also provide us a feature to remediate the issue automatically. This method is straightforward. You select a rule and specify its remediation. In this case, we need to upgrade to IMDSv2 to remediate the use of IMDSv1 in instances. We choose the remediation 'AWSConfigRemediation-EnforceEC2InstanceIMDSv2'.</p>
+
+<p>List of AWS Config rules supported.</p>
+<img src="../../../media/aws_config_list_rules.png" height="600" width="900"> <br><br>
 
 
-<img src="../../../media/aws_config_list_rules.png" height="" width=""> <br>
+<img src="../../../media/auto_remediation.png" height="" width="1000">
 
 
-<img src="../../../media/auto_remediation.png" height="" width="">
-
-
-<p> We need two primary things - <br>
+<p> We need two primary things - <br><br>
 
 	1) Create roles that allow config to acccess EC2 instance.<br>
-	2) Assign that role to the rule when you configuring.<br>
+	2) Assign that role to the rule when you configuring.<br><br>
 
 That's all that's required. Now, whenever you create an instance with IMDSv1 enabled, this rule will detect it, mark it as non-compliant, and automatically run remediation to upgrade it to IMDSv2.</p>
 
