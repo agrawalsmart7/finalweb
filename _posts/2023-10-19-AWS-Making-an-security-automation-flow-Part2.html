@@ -11,7 +11,7 @@ background: '/img/posts/01.jpg'
 
 <p>In this post, we will discuss the Server-Side Request Forgery (SSRF) vulnerability in the context of AWS Cloud. The primary goal of this post is to demonstrate how AWS Config can be used to automatically detect and remediate this issue.</p>
 
-<img src="../../../media/infra2.png" height="" width="">
+<img src="../../../media/infra2.png" height="" width="1050">
 
 <p>SSRF Vulnerability is a server-side vulnerability that enables an attacker to exploit a vulnerable server to make requests to internal or third-party servers in order to access data. In the context of AWS Cloud, the attacker's main objective is to obtain the temporary credentials assigned to an EC2 instance by attempting to access the metadata URL.</p>
 
@@ -32,7 +32,7 @@ background: '/img/posts/01.jpg'
 <p>AWS Config is a managed service provided by AWS that detects non-compliance configurations. Based on these non-compliance configurations, remediations can be applied. One of the notable aspects of AWS is its granularity, allowing you to achieve the same task in multiple, cost-effective ways.</p>
 
 
-<p>In this post, we will acheive the same task by using 2 methods </p>
+<p>In this post, we will acheive the same task by using 2 methods. </p>
 
 <p>
 	1) AWS Config Auto-remediation<br>
@@ -42,6 +42,12 @@ background: '/img/posts/01.jpg'
 <h2>AWS Config Auto-Remediation</h2>
 
 <p>AWS Config not only helps to detect the misconfiguration but also provide us a feature to remediate the issue automatically. This method is straightforward. You select a rule and specify its remediation. In this case, we need to upgrade to IMDSv2 to remediate the use of IMDSv1 in instances. We choose the remediation 'AWSConfigRemediation-EnforceIMDSv2'.</p>
+
+
+<img src="../../../media/aws_config_list_rules.png" height="" width=""> <br>
+
+
+<img src="../../../media/auto_remediation.png" height="" width="">
 
 
 <p> We need two primary things - <br>
@@ -54,7 +60,7 @@ That's all that's required. Now, whenever you create an instance with IMDSv1 ena
 
 <img src="../../../media/non_comliant.png" width="1100" height="350">
 
-<p>We created an EC2 instance with the default IMDSv1 support, as shown in the figure.</p>
+<p>I created an EC2 instance with the default IMDSv1 support, as shown in the figure.</p>
 
 <img src="../../../media/instanc_IMDS Optional.png" width="1000" height="450">
 
