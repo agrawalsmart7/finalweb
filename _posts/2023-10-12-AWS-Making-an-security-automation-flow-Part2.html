@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "AWS - Security Automation Flow - Part 2"
-subtitle: "AWS: Making an Security Automation Flow with Event Bridge, Lambda, IAM."
-date: 2023-09-13 23:45:13 -0400
+subtitle: "AWS: Making an Security Automation Flow with AWS Config, EC2, Event Bridge, Lambda, IAM."
+date: 2023-10-19 23:45:13 -0400
 background: '/img/posts/01.jpg'
 ---
 
@@ -11,7 +11,7 @@ background: '/img/posts/01.jpg'
 
 <p>In this post, we will discuss the Server-Side Request Forgery (SSRF) vulnerability in the context of AWS Cloud. The primary goal of this post is to demonstrate how AWS Config can be used to automatically detect and remediate this issue.</p>
 
-<img src="../../../media/infra.png" height="" width="">
+<img src="../../../media/infra2.png" height="" width="">
 
 <p>SSRF Vulnerability is a server-side vulnerability that enables an attacker to exploit a vulnerable server to make requests to internal or third-party servers in order to access data. In the context of AWS Cloud, the attacker's main objective is to obtain the temporary credentials assigned to an EC2 instance by attempting to access the metadata URL.</p>
 
@@ -52,7 +52,7 @@ background: '/img/posts/01.jpg'
 That's all that's required. Now, whenever you create an instance with IMDSv1 enabled, this rule will detect it, mark it as non-compliant, and automatically run remediation to upgrade it to IMDSv2.</p>
 
 
-<img src="../../../media/non_comliant.png" width="" height="">
+<img src="../../../media/non_comliant.png" width="1100" height="350">
 
 <p>We created an EC2 instance with the default IMDSv1 support, as shown in the figure.</p>
 
