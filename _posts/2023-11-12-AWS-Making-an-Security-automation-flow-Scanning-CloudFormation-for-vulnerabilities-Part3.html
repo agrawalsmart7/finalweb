@@ -21,14 +21,14 @@ background: '/img/posts/01.jpg'
 
 <p>So I started with writing the Event Bridge Rule for cloudformation. When 'CreateStack' matches, it should trigger Lambda. As shown in the screenshots below.<p>
 
-<img src="../../../media/createstackrule.png" height="300" width="800"><br>
+<img src="../../../media/createstackrule.png" height="600" width="800"><br>
 
 <img src="../../../media/rule-target2.png" height="" width="900"><br>
 
 
 <p>Now we need to configure lambda that will execute the flow. But its not that easy. On the first start, I tried to run semgrep on lambda but there were lots of issues faced during the same. The very first thing is, it downloads the semgrep tool everytime the lambda runs and on one run it takes 3 mins and I feel not confortable with this flow. I started thinking of other that is something good, easy to execute. </p>
 
-<p>So after spending some time, I came with a way where I will create a dedicted EC2 server where semgrep and our scanner.py (code found later in this blog) is installed and available, then I will use lambda to run commands on EC2 via SSM service. The only catch in this idea is, we would need to have a dedicated ec2 instance which will raise cose. I have talked how we can reduce the code last in this blow.    </p>
+<p>So after spending some time, I came with a way where I will create a dedicted EC2 server where semgrep and our scanner.py (code run semgrep, and upload results via SES) is installed and available, then I will use lambda to run commands on EC2 via SSM service. The only catch in this idea is, we would need to have a dedicated ec2 instance which will raise cose. I have talked how we can reduce the code last in this blow.    </p>
 
  <p>
 But to make it running, we would need to add all the required files inside EC2 server so that Semgrep could run easily. In this case we would require two different files/folder. First file/folder is for semgrep rules where all semgrep rules are in there and this is very straight forward, all you need to create/write semgrep rules and upload it to ec2 instance. </p>
@@ -160,6 +160,7 @@ def send_email(body):
 
 </code>	</pre>
 
+<p><b>Note: </b> We need to verify our emails in SES service. </p>
 
 <p>
     Now our semgrep is there, all the required rules are present in ec2, cloudformation.yaml is there, the only thing left is to write a lambda code that will run the scanner.py file in ec2.
