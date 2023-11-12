@@ -1,0 +1,193 @@
+---
+layout: post
+title: "AWS - Security Automation Flow - Part 3 -e Scanning CloudFormation-for-Vulnerabilitis"
+subtitle: "AWS: Making an Security Automation Flow with EventBridge, EC2, Lambda, IAM, CloudFormation, SSM, SES"
+date: 2023-11-11 23:45:13 -0400
+background: '/img/posts/01.jpg'
+---
+
+<p>Hello everyone</p>
+
+<p>Today we will see how we can create a security automation flow to scan cloudformation vulnerabilities. </p>
+
+1) Scan Cloudformation vulnerabilities via Semgrep
+2) Upload results to Emails through SES
+
+<p>So I started with writing the Event Bridge Rule for cloudformation. When 'CreateStack' matches, it should trigger Lambda. As shown in the screenshots below.<p>
+
+<img src="createstackrule.png" height="" width=""><br>
+
+<img src="rule-target2.png" height="" width=""><br>
+
+
+<p>Now we need to configure lambda that will execute the flow. But its not that easy. On the first start, I tried to run semgrep on lambda but there were lots of issues faced during the same. The very first thing is, it downloads the semgrep tool everytime the lambda runs and on one run it takes 3 mins and I feel not confortable with this flow. I started thinking of other that is something good, easy to execute. </p>
+
+<p>So after spending some time, I came with a way where I will create a dedicted EC2 server where semgrep and our scanner.py (code found later in this blog) is installed and available, then I will use lambda to run commands on EC2 via SSM service. The only catch in this idea is, we would need to have a dedicated ec2 instance. </p>
+
+ <p>
+But to make it running, we would need to add all the required files inside EC2 server so that Semgrep could run easily. In this case we would require two different files/folder. First file/folder is for semgrep rules where all semgrep rules are in there and this is very straight forward, all you need to create/write semgrep rules and upload it to ec2 instance. Second is, cloudformation.yaml file, the file that you uploaded to create stacks, now this is very tricky, you can't have the uploaded cloudformation.yaml file directly, you need to create one by yourself. Note: I am assuming that you created Cloudformation by uploading the YAML file. </p>
+
+
+<h1>Creation of Cloudformation yaml file</h1>
+
+
+<p>We need to write a function in our scanner.py where we have to list out our latest addition in the cloudformation, then we describe the cloudformation code and then we write the code in cloudformation.yaml file. I don't know how much this is effective, but cloudformation contains our all infrastructure in one yaml file, by the thought I choose this way. The creation of file is useful because we can run semgrep rules to check for vulnerabiliries. </p>
+
+<p>Please find the code mentioned below. </p>
+
+<pre><code>
+cf_client = boto3.client('cloudformation', region_name=region_name, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+last_created_stack_name = None
+response = cf_client.describe_stacks()
+sorted_stacks = sorted(response['Stacks'], key=lambda x: x['CreationTime'], reverse=True)
+if sorted_stacks:
+    last_created_stack = sorted_stacks[0]
+    last_created_stack_name = last_created_stack['StackName']
+    print(f"Last Created Stack Name: {last_created_stack_name}")
+    response = cf_client.get_template(StackName=last_created_stack_name)
+    with open('cloudformation.yaml', 'w') as f:
+        f.write(response['TemplateBody'])
+</pre>
+</code>
+
+<p>Now, we need to create a semgrep rule, here for demonstrative purpose, I created this rule, that will check for overprivileged IAM policy. </p>
+
+<pre><code>
+
+rules:
+  - id: aws-iam-policy-resource-asterisk
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          - Effect: Allow
+            Action: ...
+            Resource: '*'
+    message: |
+      Detected an IAM policy with a wildcard (*) resource. Review and restrict resource permissions for better security.
+    severity: WARNING
+
+
+
+</code>	</pre>
+
+<p>So we have rules and code for semgrep to run, its time to add semgrep command in our scanner.py so that it could run and get the results. </p>
+
+<pre><code>command = 'semgrep scan --config /home/ec2-user/sem_rule1.yaml /home/ec2-user/cloudformation.yaml'</pre></code>
+
+<p>But here we need to understand two things.</p>
+
+1) How do we confirm that semgrep found valid vulnerabilities.?<br>
+2) What do we do once we get confirmed results (vulnerabilities?<br>
+
+<p> For the first one, we can resolve it with std.err and std.stdout method</p> 
+
+<p> For the second one, Once, we get confirmed vulnerabilities, we need to upload those results to directly a group of developers emails through SES, and that mail must contain semgrep results as an attachment, so that they can refer the vulnerabilities. Also, once we found valid results we need to delete the stack immediately, because we can't deploy infrastructure with weak configurations, right?</p> 
+
+<p> Below code solves above two challenges</p>
+<pre><code>
+	
+if result.returncode == 0 and result.stdout:
+
+    # The command completed successfully
+    print("Standard Output:", result.stdout)
+    with open('results.txt', 'w') as f:
+        f.write(result.stdout)
+    send_email('test')
+    cf_client.delete_stack(StackName=last_created_stack_name)
+else:
+    # The command failed
+    print("Command failed")
+    print("Standard Error:", result.stderr)
+</code></pre>	
+
+
+Now, we need to write the send email function to send email to developers with results and call it inside if statement where we are validating the confirmed vulnerability, as mentioned above.
+
+<pre><code>	
+
+def send_email(body):
+    subject = "Semgrep Findings"
+    aws_region = ""
+    recipient_email = "cloudlearner<redacted>@gmail.com"
+    sender_email = "awsutkarsh<redacted>@gmail.com"
+    aws_access_key_id = ''
+    aws_secret_access_key = ''
+
+
+    attachment_file_path = "/home/ec2-user/results.txt" 
+
+    with open(attachment_file_path, "r") as f:
+
+
+        attachment_content = f.read() 
+        print(os.getcwd())
+        print(attachment_content)
+    msg = MIMEMultipart()
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+
+    text_body = MIMEText(body, "text")
+    msg.attach(text_body)
+
+    attachment = MIMEText(attachment_content, "plain")
+    attachment.add_header("Content-Disposition", "attachment", filename=os.path.basename(attachment_file_path))
+    msg.attach(attachment)
+
+    # Send the email
+    try:
+        ses = boto3.client("ses", region_name=aws_region, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+        ses.send_raw_email(
+            Source=sender_email,
+            Destinations=[recipient_email],
+            RawMessage={"Data": msg.as_string()},
+        )
+        print("Email with text file attachment sent successfully.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+</code>	</pre>
+
+<p> Here we are all set. Now lets talk about the permissions that I use. </p>
+
+<h1> Permissions </h1>
+
+
+<p>For the sake of this demonstration, I have full access to each services to Lambda, and EC2. Because these two are the primary services that require permissions for different services. This is not a good practice even if it is internal. </p>
+
+
+<h1>Time to test the flow.</h1>
+
+<p>Now I suppose, when I create a new stack, the CreateStack must match and it should trigger Lambda function. The lambda function must use SSM client to run the scanner.py on the EC2 and the scanner.py will run semgrep, validate the results, upload the results to my cloudlearner email ID, and immediately delete the stack. </p>
+
+<p>Let's create the stack, I named it as newstacktest1 </p>
+
+<img src="newstacktest1_created.png" width="" height=""><br>
+
+<img src="got_email.png" width="" height=""><br>
+
+
+<img src="resuilts.txt file.png" height="" width=""><br>
+
+<img src="immediately_deleted.png" height="" width=""><br>
+
+<p>We can see, we got the results on my other email.</p>
+
+
+<p> And the stack was deleted immediately, so overrally the flow works as expected. Hence our objective was accomplished. We were able to scan cloudformation vulnerabilities by using semgrep. </p>
+
+
+<h2> Improvments </h2>	
+
+<p>There are lot of improvments needs to do.</p>
+
+1) If it is internal, then EC2 must in internal as well, it should not be accessible from outside.
+2) We need dedicated ec2 server running, that can be maanaged by lambda as well, we can add code that will start the lambda once createstack match, then run the entire code, and make it in stop state.
+3) Rules, this is just a one just rule, but we can create multiple rules and we can also create a mapping where only specific rule will run for specific condition, if needed.
+4) I am not aware of any other good method instead of EC2, if there is any. Would love to hear your thoughts/ideas.
+
+<p>Thanks for reading it. If you found any technical error, please Let me know.</p>
+
+<p>If you like, dont forget to share/repost.</p>
+
+<p>Happy Diwali.</p>
