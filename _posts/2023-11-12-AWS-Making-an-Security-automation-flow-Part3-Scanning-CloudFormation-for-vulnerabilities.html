@@ -10,22 +10,32 @@ background: '/img/posts/01.jpg'
 
 <p>Today we will see how we can create a security automation flow to scan cloudformation vulnerabilities. </p>
 
-1) Scan Cloudformation vulnerabilities via Semgrep
-2) Upload results to Emails through SES
+<p> High Overview of the objective in two points</p>
+
+1) Scan Cloudformation vulnerabilities via Semgrep<br>
+2) Upload results to Emails through SES<br>
+
+<h1> Why I choose this topic?</h1>
+
+<p>As cloudformation is infrastructure as code, where we define our infrastructure services and configurations which needs to deploy securely. Here securely means, we need to detect misconfigurations and overprivileged permissions.</p>
 
 <p>So I started with writing the Event Bridge Rule for cloudformation. When 'CreateStack' matches, it should trigger Lambda. As shown in the screenshots below.<p>
 
-<img src="createstackrule.png" height="" width=""><br>
+<img src="../../../media/createstackrule.png" height="" width=""><br>
 
-<img src="rule-target2.png" height="" width=""><br>
+<img src="../../../media/rule-target2.png" height="" width=""><br>
 
 
 <p>Now we need to configure lambda that will execute the flow. But its not that easy. On the first start, I tried to run semgrep on lambda but there were lots of issues faced during the same. The very first thing is, it downloads the semgrep tool everytime the lambda runs and on one run it takes 3 mins and I feel not confortable with this flow. I started thinking of other that is something good, easy to execute. </p>
 
-<p>So after spending some time, I came with a way where I will create a dedicted EC2 server where semgrep and our scanner.py (code found later in this blog) is installed and available, then I will use lambda to run commands on EC2 via SSM service. The only catch in this idea is, we would need to have a dedicated ec2 instance. </p>
+<p>So after spending some time, I came with a way where I will create a dedicted EC2 server where semgrep and our scanner.py (code found later in this blog) is installed and available, then I will use lambda to run commands on EC2 via SSM service. The only catch in this idea is, we would need to have a dedicated ec2 instance which will raise cose. I have talked how we can reduce the code last in this blow.    </p>
 
  <p>
-But to make it running, we would need to add all the required files inside EC2 server so that Semgrep could run easily. In this case we would require two different files/folder. First file/folder is for semgrep rules where all semgrep rules are in there and this is very straight forward, all you need to create/write semgrep rules and upload it to ec2 instance. Second is, cloudformation.yaml file, the file that you uploaded to create stacks, now this is very tricky, you can't have the uploaded cloudformation.yaml file directly, you need to create one by yourself. Note: I am assuming that you created Cloudformation by uploading the YAML file. </p>
+But to make it running, we would need to add all the required files inside EC2 server so that Semgrep could run easily. In this case we would require two different files/folder. First file/folder is for semgrep rules where all semgrep rules are in there and this is very straight forward, all you need to create/write semgrep rules and upload it to ec2 instance. Second is, cloudformation.yaml file, the file that you uploaded to create stacks. </p>
+
+<img src="../../../media/upload_cloudformation_template.png" height="" width=""><br>    
+
+<p>Now this is very tricky, you can't get the uploaded cloudformation.yaml file directly, you need to create one by yourself. Note: I am assuming that you created Cloudformation by uploading the YAML file. </p>
 
 
 <h1>Creation of Cloudformation yaml file</h1>
@@ -148,6 +158,45 @@ def send_email(body):
 
 </code>	</pre>
 
+
+<p>
+    Now our semgrep is there, all the required rules are present in ec2, cloudformation.yaml is there, the only thing left is to write a lambda code that will run the scanner.py file in ec2.
+
+</p>
+
+<p> Below is the code for lambda</p>
+
+<pre><code>
+    import boto3
+
+def lambda_handler(event, body):
+    aws_access_key_id = ''
+    aws_secret_access_key = ''
+    region_name = 'us-east-1'  
+
+    instance_id = '' 
+    command = 'python3 -m pip install boto3 && python3 -m pip install semgrep && python3 /home/ec2-user/scanner.py'
+    ssm_client = boto3.client('ssm', region_name=region_name, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+
+    response = ssm_client.send_command(
+        
+        InstanceIds=[
+        'i-00f6e3794a87008e4',
+        ],
+        DocumentName='AWS-RunShellScript',
+        Parameters={
+            'commands': [command],
+        },
+    )
+
+    command_id = response['Command']['CommandId']
+    return f"Command ID: {command_id} sent to EC2 instance {instance_id}"
+
+
+</code></pre> 
+
+<p> In the command, we have to install boto3 and semgrep, because SSM runs in different environment and there boto3 and semgrep will not be available.</p>
+
 <p> Here we are all set. Now lets talk about the permissions that I use. </p>
 
 <h1> Permissions </h1>
@@ -162,14 +211,14 @@ def send_email(body):
 
 <p>Let's create the stack, I named it as newstacktest1 </p>
 
-<img src="newstacktest1_created.png" width="" height=""><br>
+<img src="../../../media/newstacktest1_created.png" width="" height=""><br>
 
-<img src="got_email.png" width="" height=""><br>
+<img src="../../../media/got_email.png" width="" height=""><br>
 
 
-<img src="resuilts.txt file.png" height="" width=""><br>
+<img src="../../../media/resuilts.txt file.png" height="" width=""><br>
 
-<img src="immediately_deleted.png" height="" width=""><br>
+<img src="../../../media/immediately_deleted.png" height="" width=""><br>
 
 <p>We can see, we got the results on my other email.</p>
 
