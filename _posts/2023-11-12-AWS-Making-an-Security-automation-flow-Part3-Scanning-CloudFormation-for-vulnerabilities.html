@@ -13,17 +13,17 @@ background: '/img/posts/01.jpg'
 <p> High Overview of the objective in two points</p>
 
 1) Scan Cloudformation vulnerabilities via Semgrep<br>
-2) Upload results to Emails through SES<br>
+2) Upload results to Emails through SES<br><br>
 
 <h1> Why I choose this topic?</h1>
 
-<p>As cloudformation is infrastructure as code, where we define our infrastructure services and configurations which needs to deploy securely. Here securely means, we need to detect misconfigurations and overprivileged permissions.</p>
+<p>As cloudformation is infrastructure as code, where we define our infrastructure services and configurations in yaml format which needs to scan it for miconfigurations overprivileged permissions.</p>
 
 <p>So I started with writing the Event Bridge Rule for cloudformation. When 'CreateStack' matches, it should trigger Lambda. As shown in the screenshots below.<p>
 
-<img src="../../../media/createstackrule.png" height="" width=""><br>
+<img src="../../../media/createstackrule.png" height="300" width="800"><br>
 
-<img src="../../../media/rule-target2.png" height="" width=""><br>
+<img src="../../../media/rule-target2.png" height="" width="900"><br>
 
 
 <p>Now we need to configure lambda that will execute the flow. But its not that easy. On the first start, I tried to run semgrep on lambda but there were lots of issues faced during the same. The very first thing is, it downloads the semgrep tool everytime the lambda runs and on one run it takes 3 mins and I feel not confortable with this flow. I started thinking of other that is something good, easy to execute. </p>
@@ -31,9 +31,11 @@ background: '/img/posts/01.jpg'
 <p>So after spending some time, I came with a way where I will create a dedicted EC2 server where semgrep and our scanner.py (code found later in this blog) is installed and available, then I will use lambda to run commands on EC2 via SSM service. The only catch in this idea is, we would need to have a dedicated ec2 instance which will raise cose. I have talked how we can reduce the code last in this blow.    </p>
 
  <p>
-But to make it running, we would need to add all the required files inside EC2 server so that Semgrep could run easily. In this case we would require two different files/folder. First file/folder is for semgrep rules where all semgrep rules are in there and this is very straight forward, all you need to create/write semgrep rules and upload it to ec2 instance. Second is, cloudformation.yaml file, the file that you uploaded to create stacks. </p>
+But to make it running, we would need to add all the required files inside EC2 server so that Semgrep could run easily. In this case we would require two different files/folder. First file/folder is for semgrep rules where all semgrep rules are in there and this is very straight forward, all you need to create/write semgrep rules and upload it to ec2 instance. </p>
 
-<img src="../../../media/upload_cloudformation_template.png" height="" width=""><br>    
+<p>Second is, cloudformation.yaml file, the file that you uploaded to create stacks, shown in the figure below </p>
+
+<img src="../../../media/upload_cloudformation_template.png" height="" width="1000"><br>    
 
 <p>Now this is very tricky, you can't get the uploaded cloudformation.yaml file directly, you need to create one by yourself. Note: I am assuming that you created Cloudformation by uploading the YAML file. </p>
 
@@ -202,7 +204,7 @@ def lambda_handler(event, body):
 <h1> Permissions </h1>
 
 
-<p>For the sake of this demonstration, I have full access to each services to Lambda, and EC2. Because these two are the primary services that require permissions for different services. This is not a good practice even if it is internal. </p>
+<p>For the sake of this demonstration, I have given the full access to each services to Lambda, and EC2. Because these two are the primary services that require permissions for different services. This is not a good practice even if it is internal. </p>
 
 
 <h1>Time to test the flow.</h1>
@@ -211,14 +213,14 @@ def lambda_handler(event, body):
 
 <p>Let's create the stack, I named it as newstacktest1 </p>
 
-<img src="../../../media/newstacktest1_created.png" width="" height=""><br>
+<img src="../../../media/newstacktest1_created.png" width="1000" height=""><br>
 
-<img src="../../../media/got_email.png" width="" height=""><br>
+<img src="../../../media/got_email.png" width="900" height=""><br>
 
 
-<img src="../../../media/resuilts.txt file.png" height="" width=""><br>
+<img src="../../../media/resuilts.txt file.png" height="" width="900"><br>
 
-<img src="../../../media/immediately_deleted.png" height="" width=""><br>
+<img src="../../../media/immediately_deleted.png" height="" width="900"><br>
 
 <p>We can see, we got the results on my other email.</p>
 
@@ -230,10 +232,10 @@ def lambda_handler(event, body):
 
 <p>There are lot of improvments needs to do.</p>
 
-1) If it is internal, then EC2 must in internal as well, it should not be accessible from outside.
-2) We need dedicated ec2 server running, that can be maanaged by lambda as well, we can add code that will start the lambda once createstack match, then run the entire code, and make it in stop state.
-3) Rules, this is just a one just rule, but we can create multiple rules and we can also create a mapping where only specific rule will run for specific condition, if needed.
-4) I am not aware of any other good method instead of EC2, if there is any. Would love to hear your thoughts/ideas.
+1) If it is internal, then EC2 must in internal as well, it should not be accessible from outside.<br>
+2) We need dedicated ec2 server running, that can be maanaged by lambda as well, we can add code that will start the lambda once createstack match, then run the entire code, and make it in stop state.<br>
+3) Rules, this is just a one just rule, but we can create multiple rules and we can also create a mapping where only specific rule will run for specific condition, if needed.<br>
+4) I am not aware of any other good method instead of EC2, if there is any. Would love to hear your thoughts/ideas.<br>
 
 <p>Thanks for reading it. If you found any technical error, please Let me know.</p>
 
